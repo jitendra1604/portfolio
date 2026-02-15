@@ -8,8 +8,8 @@ import RefinedAgencyCursor from "./components/AgencyCursor";
 
 
 export const metadata: Metadata = {
-  title: "GSAP Next App",
-  description: "High-performance animations with GSAP and Next.js",
+  title: "Jeet",
+  description: "Jeet Portfolio",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
