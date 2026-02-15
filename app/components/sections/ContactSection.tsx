@@ -80,11 +80,6 @@ export default function ContactSection() {
                 </a>
               </div>
 
-              <div>
-                <span className="block text-sm text-white/40">Location</span>
-                <span>{contact.location}</span>
-              </div>
-
               <div className="flex gap-6 pt-4">
                 <a
                   href={contact.linkedin}

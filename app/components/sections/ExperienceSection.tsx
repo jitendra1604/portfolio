@@ -109,17 +109,6 @@ export default function ExperienceSection() {
                         {exp.company}
                       </p>
 
-                      {exp.description && (
-                        <ul className="space-y-2 text-sm text-gray-400">
-                          {exp.description.slice(0, 3).map((item, i) => (
-                            <li key={i} className="flex gap-2">
-                              <span className="mt-2 h-1.5 w-1.5 rounded-full bg-white/50" />
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-
                     </div>
                   </div>
                 </div>

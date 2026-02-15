@@ -27,6 +27,7 @@
       "company": "Terralogic Software Solutions",
       "role": "Senior Full Stack Developer",
       "duration": "June 2022 - Present",
+      "period":"2 yrs 10 mos",
       "achievements": [
         "Developed and optimized a Next.js e-commerce platform serving 100K+ monthly users",
         "Integrated WhatsApp Business API for automated customer support",
@@ -38,6 +39,7 @@
       "company": "Codehive IT Solutions",
       "role": "Full Stack Developer",
       "duration": "Dec 2019 - June 2022",
+      "period":"3 yrs 10 mos",
       "achievements": [
         "Implemented AWS Lambda serverless functions for real-time processing",
         "Built a custom logging system with log rotation for production monitoring",
@@ -115,6 +117,7 @@
     "description": "If you're building a product that needs solid architecture, clean frontend systems, and scalable backend infrastructure — let's talk.",
     "ctaText": "Start a Conversation",
     "email": "sutharjitendra2@gmail.com",
-    "linkedin": "https://linkedin.com/in/jitendra-s-435639167"
+    "linkedin": "https://linkedin.com/in/jitendra-s-435639167",
+    "github": "https://github.com/jitendra1604"
   }
 }
