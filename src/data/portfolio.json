@@ -1,0 +1,120 @@
+{
+  "hero": {
+    "headlineOptions": [
+      "Engineering Scalable Systems That Don't Break Under Pressure.",
+      "Full Stack Systems. Cloud Native. Built for Scale.",
+      "From UI to Infrastructure — I Ship Production-Ready Systems.",
+      "Turning Complex Requirements Into Clean, Scalable Architecture.",
+      "Building High-Impact Web Platforms With Precision."
+    ],
+    "selectedHeadline": "Engineering Scalable Systems That Don't Break Under Pressure.",
+    "subtitle": "Senior Full Stack Developer with 5+ years of experience building scalable web platforms using React, Next.js, Node.js, and AWS. I specialize in performance optimization, system architecture, and leading engineering teams.",
+    "ctaText": "Explore My Work"
+  },
+  "about": {
+    "title": "About Me",
+    "description": "I'm a results-driven Full Stack Developer with 5+ years of experience designing and building scalable web applications. My expertise spans frontend architecture, backend systems, cloud infrastructure, and DevOps automation. I focus on writing maintainable code, optimizing performance, and building systems that scale reliably in production.",
+    "highlights": [
+      "Architected and deployed containerized applications on AWS ECS with Fargate",
+      "Built Next.js platform serving 100K+ monthly users",
+      "Designed microservices architectures for scalable applications",
+      "Led and mentored a team of 12 developers",
+      "Optimized CI/CD pipelines reducing deployment time by 40%"
+    ]
+  },
+  "experience": [
+    {
+      "company": "Terralogic Software Solutions",
+      "role": "Senior Full Stack Developer",
+      "duration": "June 2022 - Present",
+      "achievements": [
+        "Developed and optimized a Next.js e-commerce platform serving 100K+ monthly users",
+        "Integrated WhatsApp Business API for automated customer support",
+        "Deployed containerized applications on AWS ECS with Fargate",
+        "Led a team of 12 developers and enforced engineering best practices"
+      ]
+    },
+    {
+      "company": "Codehive IT Solutions",
+      "role": "Full Stack Developer",
+      "duration": "Dec 2019 - June 2022",
+      "achievements": [
+        "Implemented AWS Lambda serverless functions for real-time processing",
+        "Built a custom logging system with log rotation for production monitoring",
+        "Automated CI/CD using GitHub Actions reducing deployment time by 40%"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Yichi",
+      "description": "Interactive language learning platform for Chinese learners with dynamic lesson modules.",
+      "stack": ["React", "Spring Boot"],
+      "highlights": [
+        "Built interactive learning modules",
+        "Integrated APIs for dynamic lesson rendering"
+      ]
+    },
+    {
+      "name": "Talitrix",
+      "description": "Offender tracking and monitoring platform with real-time dashboards.",
+      "stack": ["React", "Python"],
+      "highlights": [
+        "Developed real-time dashboards",
+        "Integrated frontend with tracking services"
+      ]
+    },
+    {
+      "name": "Blox",
+      "description": "Real estate web platform for property listing and management.",
+      "stack": ["Next.js", "Laravel"],
+      "highlights": [
+        "Led responsive UI development",
+        "Improved UX and mentored junior developers"
+      ]
+    },
+    {
+      "name": "Accreda",
+      "description": "Educational platform for online learning and certifications.",
+      "stack": ["React", "Node.js"],
+      "highlights": [
+        "Designed microservices architecture",
+        "Built reusable scalable frontend components"
+      ]
+    },
+    {
+      "name": "Contour",
+      "description": "Education portal with student and admin dashboards.",
+      "stack": ["React", "Node.js", "AWS"],
+      "highlights": [
+        "Architected role-based access control",
+        "Integrated secure AWS-hosted APIs"
+      ]
+    },
+    {
+      "name": "PMI",
+      "description": "Marketing rewards application with user activity tracking.",
+      "stack": ["React", "Node.js", "AWS"],
+      "highlights": [
+        "Built reward point system",
+        "Implemented leaderboard and tracking engine"
+      ]
+    },
+    {
+      "name": "Altius Hub",
+      "description": "Medicine distributor management platform with logistics dashboards.",
+      "stack": ["React", "Python", "AWS"],
+      "highlights": [
+        "Built inventory and logistics dashboards",
+        "Improved performance via AWS optimizations"
+      ]
+    }
+  ],
+  "contact": {
+    "title": "Let's Build Something Meaningful",
+    "description": "If you're building a product that needs solid architecture, clean frontend systems, and scalable backend infrastructure — let's talk.",
+    "ctaText": "Start a Conversation",
+    "email": "sutharjitendra2@gmail.com",
+    "linkedin": "https://linkedin.com/in/jitendra-s-435639167"
+  }
+}
