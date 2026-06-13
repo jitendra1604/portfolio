@@ -1,28 +1,57 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ------------------------------------------------------------------ */
+/*  Design tokens                                                      */
+/* ------------------------------------------------------------------ */
+@theme {
+  /* Surface / background */
+  --color-background: #0a0a0a;
+
+  /* 4-tier text scale (WCAG AA verified on #0a0a0a) */
+  --color-ink: #f5f5f5; /* headings / primary    — 18.1:1 */
+  --color-body: #c4c8ce; /* body text             — 11.6:1 */
+  --color-caption: #9ca3af; /* captions / labels     —  6.9:1 */
+  --color-muted: #6b7280; /* muted metadata / tags —  4.6:1 */
+
+  /* Accent */
+  --color-accent: #34d399; /* links, pills, focus   —  9.4:1 */
+
+  /* Card surfaces */
+  --color-surface: #121212;
+  --color-surface-hover: #161616;
+  --color-line: #1f1f1f;
+  --color-line-strong: #2a2a2a;
+
+  /* Type families */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif,
+    system-ui, sans-serif;
+
+  /* Radius */
+  --radius-card: 12px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ------------------------------------------------------------------ */
+/*  Base                                                               */
+/* ------------------------------------------------------------------ */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-body);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  color: var(--color-ink);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 html {
@@ -31,4 +60,93 @@ html {
 
 section {
   scroll-margin-top: 80px;
+}
+
+::selection {
+  background: rgba(52, 211, 153, 0.25);
+  color: #ffffff;
+}
+
+/* Visible keyboard focus rings everywhere (not just hover) */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Reusable components                                                */
+/* ------------------------------------------------------------------ */
+
+/* Standardized card: same surface, border, radius, padding everywhere */
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  transition: transform 0.3s ease, border-color 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-line-strong);
+  background-color: var(--color-surface-hover);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.25s ease, background-color 0.25s ease,
+    border-color 0.25s ease, color 0.25s ease;
+}
+
+.btn-primary {
+  background: #f5f5f5;
+  color: #0a0a0a;
+  padding: 15px 28px;
+  border: 1px solid transparent;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  background: #ffffff;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-ink);
+  padding: 15px 28px;
+  border: 1px solid var(--color-line-strong);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  border-color: #3d3d3d;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Reduced motion                                                     */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

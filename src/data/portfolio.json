@@ -27,7 +27,7 @@
       "company": "Terralogic Software Solutions",
       "role": "Senior Full Stack Developer",
       "duration": "June 2022 - Present",
-      "period":"2 yrs 10 mos",
+      "period": "2 yrs 10 mos",
       "achievements": [
         "Developed and optimized a Next.js e-commerce platform serving 100K+ monthly users",
         "Integrated WhatsApp Business API for automated customer support",
@@ -39,7 +39,7 @@
       "company": "Codehive IT Solutions",
       "role": "Full Stack Developer",
       "duration": "Dec 2019 - June 2022",
-      "period":"3 yrs 10 mos",
+      "period": "3 yrs 10 mos",
       "achievements": [
         "Implemented AWS Lambda serverless functions for real-time processing",
         "Built a custom logging system with log rotation for production monitoring",
@@ -49,69 +49,334 @@
   ],
   "projects": [
     {
+      "slug": "yichi",
       "name": "Yichi",
       "description": "Interactive language learning platform for Chinese learners with dynamic lesson modules.",
       "stack": ["React", "Spring Boot"],
       "highlights": [
         "Built interactive learning modules",
         "Integrated APIs for dynamic lesson rendering"
-      ]
+      ],
+      "detail": {
+        "architecture": "React handled the learner experience while Spring Boot powered lesson APIs, user progress, and adaptive content delivery.",
+        "decisions": [
+          "Chose component-driven lesson blocks so new activity types could be shipped without refactoring the entire interface.",
+          "Used API-driven content rendering to keep lesson updates decoupled from frontend deployments.",
+          "Focused on responsive interaction patterns because users spent long sessions on tablets and smaller laptops."
+        ],
+        "challenges": [
+          "Balancing rich interactions with performance on long lesson pages.",
+          "Keeping lesson state predictable while users moved between exercises quickly.",
+          "Reducing friction for content editors who needed frequent curriculum updates."
+        ],
+        "flow": [
+          "Learner selects a lesson path.",
+          "Frontend requests lesson modules and progress state.",
+          "Backend assembles lesson content and returns activity configuration.",
+          "Progress events are persisted so the next session resumes cleanly."
+        ],
+        "outcomes": [
+          "Created a modular lesson experience that could scale with new content formats.",
+          "Improved the maintainability of the learning UI by standardizing activity rendering.",
+          "Made curriculum delivery faster for the team shipping new lessons."
+        ],
+        "screens": [
+          "Lesson dashboard",
+          "Interactive exercise flow",
+          "Progress summary"
+        ]
+      }
     },
     {
+      "slug": "talitrix",
       "name": "Talitrix",
       "description": "Offender tracking and monitoring platform with real-time dashboards.",
       "stack": ["React", "Python"],
       "highlights": [
         "Developed real-time dashboards",
         "Integrated frontend with tracking services"
-      ]
+      ],
+      "detail": {
+        "architecture": "React dashboards consumed Python-backed monitoring services that aggregated tracking signals and surfaced live updates for operators.",
+        "decisions": [
+          "Prioritized dashboard clarity over ornamental UI because operators needed fast signal recognition.",
+          "Split the interface into reusable monitoring widgets so views could be reconfigured by workflow.",
+          "Used streaming-friendly update patterns to keep critical panels fresh without full-page reloads."
+        ],
+        "challenges": [
+          "Presenting high-volume activity data without overwhelming users.",
+          "Designing layouts that remained readable during live updates.",
+          "Keeping front-end performance stable when many widgets refreshed together."
+        ],
+        "flow": [
+          "Tracking services ingest events.",
+          "Backend normalizes and exposes dashboard-ready data.",
+          "Frontend renders operator views with live status indicators.",
+          "Users drill into entities and review exception states."
+        ],
+        "outcomes": [
+          "Delivered dashboards that supported faster operator response.",
+          "Improved readability of live monitoring screens.",
+          "Established a reusable pattern for real-time admin interfaces."
+        ],
+        "screens": [
+          "Operations dashboard",
+          "Alerts and exceptions panel",
+          "Entity detail view"
+        ]
+      }
     },
     {
+      "slug": "blox",
       "name": "Blox",
       "description": "Real estate web platform for property listing and management.",
       "stack": ["Next.js", "Laravel"],
       "highlights": [
         "Led responsive UI development",
         "Improved UX and mentored junior developers"
-      ]
+      ],
+      "detail": {
+        "architecture": "Next.js delivered a performant listing experience while Laravel powered property management, search data, and admin operations.",
+        "decisions": [
+          "Used Next.js for routing and rendering performance on marketing and listing pages.",
+          "Designed responsive listing cards and filters around mobile-first browsing behavior.",
+          "Established reusable page and form patterns so the team could iterate faster."
+        ],
+        "challenges": [
+          "Maintaining search usability across large listing sets.",
+          "Balancing marketing polish with the operational needs of admins.",
+          "Coordinating frontend consistency across a growing team."
+        ],
+        "flow": [
+          "Visitors browse and filter listings.",
+          "Search and property data are served from Laravel APIs.",
+          "Agents manage listings through admin workflows.",
+          "Content and listing state stay synchronized across public and internal views."
+        ],
+        "outcomes": [
+          "Shipped a faster and more consistent browsing experience.",
+          "Improved UI quality across responsive breakpoints.",
+          "Raised delivery quality through mentorship and pattern reuse."
+        ],
+        "screens": [
+          "Listings grid",
+          "Property detail page",
+          "Agent management panel"
+        ]
+      }
     },
     {
+      "slug": "accreda",
       "name": "Accreda",
       "description": "Educational platform for online learning and certifications.",
       "stack": ["React", "Node.js"],
       "highlights": [
         "Designed microservices architecture",
         "Built reusable scalable frontend components"
-      ]
+      ],
+      "detail": {
+        "architecture": "React handled course and certification experiences while Node.js services supported enrollment, content, and issuance workflows.",
+        "decisions": [
+          "Created reusable course UI primitives to support multiple education flows.",
+          "Separated service concerns so enrollment and certification logic could evolve independently.",
+          "Optimized for maintainability because product requirements changed frequently."
+        ],
+        "challenges": [
+          "Keeping the certification flow easy to follow for users.",
+          "Managing cross-service dependencies without creating brittle frontend assumptions.",
+          "Building components that worked for both learner-facing and admin-facing experiences."
+        ],
+        "flow": [
+          "Learners enroll in courses.",
+          "Node.js services coordinate lessons, assessments, and completion status.",
+          "Frontend surfaces progress and certification milestones.",
+          "Completed learners receive certification-ready outcomes."
+        ],
+        "outcomes": [
+          "Improved reuse across the platform UI.",
+          "Made the education flow easier to extend for future products.",
+          "Reduced frontend duplication through scalable component design."
+        ],
+        "screens": [
+          "Course catalog",
+          "Learning journey",
+          "Certification checkpoint"
+        ]
+      }
     },
     {
+      "slug": "contour",
       "name": "Contour",
       "description": "Education portal with student and admin dashboards.",
       "stack": ["React", "Node.js", "AWS"],
       "highlights": [
         "Architected role-based access control",
         "Integrated secure AWS-hosted APIs"
-      ]
+      ],
+      "detail": {
+        "architecture": "React dashboards communicated with Node.js services hosted on AWS, with role-aware data shaping for student and admin experiences.",
+        "decisions": [
+          "Implemented role-based UI boundaries early to prevent privilege leakage.",
+          "Used AWS-hosted APIs with secure integration patterns for operational reliability.",
+          "Kept dashboard modules isolated so admin and student flows could evolve independently."
+        ],
+        "challenges": [
+          "Ensuring authorization remained consistent across multiple views.",
+          "Keeping dashboard performance strong as feature complexity increased.",
+          "Designing admin tooling that remained approachable for non-technical users."
+        ],
+        "flow": [
+          "Users authenticate and receive role-scoped access.",
+          "Node.js services fetch and shape the relevant educational data.",
+          "AWS-hosted APIs serve dashboards and activity records.",
+          "Frontend renders task-specific views for students and admins."
+        ],
+        "outcomes": [
+          "Delivered a more secure and maintainable role-aware portal.",
+          "Improved trust in permission-sensitive workflows.",
+          "Created a cleaner structure for future dashboard expansion."
+        ],
+        "screens": [
+          "Student dashboard",
+          "Admin dashboard",
+          "Role management flow"
+        ]
+      }
     },
     {
+      "slug": "pmi",
       "name": "PMI",
       "description": "Marketing rewards application with user activity tracking.",
       "stack": ["React", "Node.js", "AWS"],
       "highlights": [
         "Built reward point system",
         "Implemented leaderboard and tracking engine"
-      ]
+      ],
+      "detail": {
+        "architecture": "React powered engagement flows while Node.js and AWS-backed services tracked actions, points, and leaderboard standings.",
+        "decisions": [
+          "Separated reward calculation concerns from presentation logic so business rules stayed maintainable.",
+          "Designed leaderboard views for quick comprehension of rank and progress.",
+          "Kept the tracking engine modular to support changing campaign logic."
+        ],
+        "challenges": [
+          "Making the reward system transparent enough for users to trust it.",
+          "Managing action tracking accuracy across campaign events.",
+          "Balancing gamification with performance and reporting needs."
+        ],
+        "flow": [
+          "Users complete trackable marketing actions.",
+          "Backend services evaluate points and update standings.",
+          "Leaderboard and rewards data are returned to the frontend.",
+          "Users monitor progress and incentives in real time."
+        ],
+        "outcomes": [
+          "Created a flexible rewards workflow that could support campaign changes.",
+          "Improved clarity of ranking and point progress for users.",
+          "Strengthened the product's engagement loop with measurable actions."
+        ],
+        "screens": [
+          "Rewards dashboard",
+          "Leaderboard",
+          "Activity tracking panel"
+        ]
+      }
     },
     {
+      "slug": "altius-hub",
       "name": "Altius Hub",
       "description": "Medicine distributor management platform with logistics dashboards.",
       "stack": ["React", "Python", "AWS"],
       "highlights": [
         "Built inventory and logistics dashboards",
         "Improved performance via AWS optimizations"
-      ]
+      ],
+      "detail": {
+        "architecture": "React dashboards consumed Python services and AWS infrastructure to surface inventory, movement, and logistics insights for distributor operations.",
+        "decisions": [
+          "Organized the UI around operational visibility so users could spot supply issues quickly.",
+          "Optimized data-heavy views for performance because dashboard lag directly affected workflow efficiency.",
+          "Used AWS-hosted infrastructure patterns that supported dependable reporting and scaling."
+        ],
+        "challenges": [
+          "Managing large, fast-changing operational datasets.",
+          "Keeping dashboards readable while exposing enough detail for logistics decisions.",
+          "Reducing performance bottlenecks in dashboard rendering."
+        ],
+        "flow": [
+          "Operational data is collected from inventory and logistics sources.",
+          "Python services aggregate and normalize key metrics.",
+          "AWS-backed infrastructure serves dashboard-ready responses.",
+          "Frontend displays inventory health, distribution status, and logistics views."
+        ],
+        "outcomes": [
+          "Improved logistics visibility for distributor workflows.",
+          "Reduced rendering friction in data-heavy views.",
+          "Created a stronger operational dashboard foundation for scale."
+        ],
+        "screens": [
+          "Inventory dashboard",
+          "Distribution analytics",
+          "Logistics monitoring view"
+        ]
+      }
     }
   ],
+  "howIBuild": {
+    "title": "I build with product clarity, system depth, and AI-assisted speed.",
+    "intro": "My workflow blends strong engineering fundamentals with AI-first execution. I use AI to accelerate exploration, drafting, and debugging, but I keep architecture, review quality, and production reliability grounded in deliberate engineering decisions.",
+    "pillars": [
+      {
+        "title": "System Thinking First",
+        "description": "Before shipping UI, I define boundaries, state flow, and failure modes so the product can scale without being rewritten every sprint.",
+        "points": [
+          "Break features into clean frontend, service, and infrastructure concerns.",
+          "Model data flow early so edge cases surface before implementation.",
+          "Design for maintainability, not just delivery speed."
+        ]
+      },
+      {
+        "title": "AI As A Force Multiplier",
+        "description": "I use AI for faster ideation, code scaffolding, debugging support, and documentation, while keeping human judgment on architecture and final quality.",
+        "points": [
+          "Use AI to generate first-pass implementation paths and compare approaches quickly.",
+          "Pressure-test prompts with constraints so outputs are useful, not generic.",
+          "Treat AI as a collaborator in delivery, never as a replacement for engineering review."
+        ]
+      },
+      {
+        "title": "Production-Ready Delivery",
+        "description": "I care about the last 20% of work: observability, performance, deployability, and making sure the product survives real user traffic.",
+        "points": [
+          "Prioritize performance budgets and rendering efficiency.",
+          "Keep CI/CD and deployment workflows part of the feature conversation.",
+          "Document decisions so teams can extend the system without guesswork."
+        ]
+      }
+    ],
+    "workflow": [
+      {
+        "label": "01",
+        "title": "Frame the problem",
+        "description": "Clarify user goals, system boundaries, and the minimum reliable architecture."
+      },
+      {
+        "label": "02",
+        "title": "Prototype with AI",
+        "description": "Use AI to accelerate drafts, compare implementation options, and expose blind spots early."
+      },
+      {
+        "label": "03",
+        "title": "Build the core path",
+        "description": "Ship the happy path with maintainable components, data flow, and operational hooks."
+      },
+      {
+        "label": "04",
+        "title": "Harden for production",
+        "description": "Review edge cases, performance, deployment readiness, and handoff quality."
+      }
+    ]
+  },
   "contact": {
     "title": "Let's Build Something Meaningful",
     "description": "If you're building a product that needs solid architecture, clean frontend systems, and scalable backend infrastructure — let's talk.",
@@ -119,5 +384,16 @@
     "email": "sutharjitendra2@gmail.com",
     "linkedin": "https://linkedin.com/in/jitendra-s-435639167",
     "github": "https://github.com/jitendra1604"
+  },
+  "ai": {
+    "title": "Ask About Me",
+    "suggestedQuestions": [
+      "Who is Jeet?",
+      "Explain your projects",
+      "What tech do you use?",
+      "How do you use AI in your workflow?",
+      "Which project best shows your system design skills?"
+    ],
+    "systemPrompt": "You are Jeet's portfolio AI assistant. Answer with a confident, engineering-focused tone. Keep answers concise, clear, and grounded in the provided portfolio context. Highlight system design, technical tradeoffs, delivery thinking, and the actual technologies mentioned in the portfolio data."
   }
 }

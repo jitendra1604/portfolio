@@ -20,42 +20,32 @@ export default function AboutSection() {
       },
     });
 
-    tl.from(q(".about-title"), {
-      y: 40,
-      opacity: 0,
-      duration: 0.7,
-      ease: "power3.out",
-    })
-      .from(
+    tl.fromTo(
+      q(".about-title"),
+      { y: 40, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" }
+    )
+      .fromTo(
         q(".about-description"),
-        {
-          y: 30,
-          opacity: 0,
-          duration: 0.7,
-          ease: "power3.out",
-        },
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
         "-=0.4"
       )
-      .from(
+      .fromTo(
         q(".about-highlight"),
-        {
-          y: 20,
-          opacity: 0,
-          stagger: 0.08,
-          duration: 0.5,
-          ease: "power2.out",
-        },
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, stagger: 0.08, duration: 0.5, ease: "power2.out" },
         "-=0.3"
       );
-  }, []);
+  });
 
   return (
     <section
       id="about"
       ref={scope}
-      className="relative py-32 bg-black text-white px-6"
+      className="relative py-24 md:py-32 bg-background text-ink px-6"
     >
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-20">
+      <div className="max-w-[1200px] mx-auto grid md:grid-cols-2 gap-20">
 
         {/* LEFT SIDE — Narrative */}
         <div>
@@ -63,20 +53,17 @@ export default function AboutSection() {
             {title}
           </h2>
 
-          <p className="about-description text-lg text-gray-400 leading-relaxed max-w-xl">
+          <p className="about-description text-lg text-body leading-relaxed max-w-xl">
             {description}
           </p>
         </div>
 
         {/* RIGHT SIDE — Structured Capability Blocks */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
           {highlights.map((item, index) => (
-            <div
-              key={index}
-              className="about-highlight border border-white/10 rounded-xl p-6 bg-white/5 backdrop-blur-sm hover:border-white/20 transition-colors duration-300"
-            >
-              <p className="text-gray-300 leading-relaxed">
+            <div key={index} className="about-highlight card">
+              <p className="text-body leading-relaxed">
                 {item}
               </p>
             </div>

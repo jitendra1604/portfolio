@@ -10,21 +10,26 @@ import Image from "next/image";
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Header() {
-  const { scope } = useGsap((gsap, scopeEl) => {
-    // Intro animation
-    gsap.from(scopeEl.querySelector(".nav-logo"), {
-      y: -40,
-      opacity: 0,
-      duration: 0.6,
-    });
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileTl = useRef<gsap.core.Timeline | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [active, setActive] = useState("#home");
 
-    gsap.from(scopeEl.querySelectorAll(".nav-item"), {
-      y: -30,
-      opacity: 0,
-      stagger: 0.1,
-      duration: 0.5,
-      delay: 0.2,
-    });
+  const { scope } = useGsap((gsap, scopeEl) => {
+    const triggers: ScrollTrigger[] = [];
+
+    // Intro animation
+    gsap.fromTo(
+      scopeEl.querySelector(".nav-logo"),
+      { y: -40, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6 }
+    );
+
+    gsap.fromTo(
+      scopeEl.querySelectorAll(".nav-item"),
+      { y: -30, opacity: 0 },
+      { y: 0, opacity: 1, stagger: 0.1, duration: 0.5, delay: 0.2 }
+    );
 
     // Hide / show on scroll
     let lastScroll = 0;
@@ -49,33 +54,29 @@ export default function Header() {
       lastScroll = current;
     };
 
-    window.addEventListener("scroll", onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     // Active section detection
     menu.forEach((item) => {
       const section = document.querySelector(item.href);
       if (!section) return;
 
-      ScrollTrigger.create({
+      const trigger = ScrollTrigger.create({
         trigger: section,
         start: "top center",
         end: "bottom center",
         onEnter: () => setActive(item.href),
         onEnterBack: () => setActive(item.href),
       });
+
+      triggers.push(trigger);
     });
 
     return () => {
       window.removeEventListener("scroll", onScroll);
-      ScrollTrigger.getAll().forEach((st) => st.kill());
+      triggers.forEach((trigger) => trigger.kill());
     };
-  }, []);
-
-  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
-  const mobileTl = useRef<gsap.core.Timeline | null>(null);
-
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [active, setActive] = useState("#home");
+  });
 
   // Mobile animation
   useEffect(() => {
@@ -89,26 +90,53 @@ export default function Header() {
         { y: "-100%", opacity: 0 },
         { y: "0%", opacity: 1, duration: 0.4, ease: "power3.out" }
       )
-      .from(
+      .fromTo(
         ".mobile-nav-item",
-        {
-          y: 30,
-          opacity: 0,
-          stagger: 0.08,
-          duration: 0.3,
-        },
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, stagger: 0.08, duration: 0.3 },
         "-=0.2"
       );
+
+    return () => {
+      mobileTl.current?.kill();
+      mobileTl.current = null;
+    };
   }, []);
 
   useEffect(() => {
     if (!mobileTl.current) return;
-    menuOpen ? mobileTl.current.play() : mobileTl.current.reverse();
+
+    if (menuOpen) {
+      mobileTl.current.play();
+    } else {
+      mobileTl.current.reverse();
+    }
   }, [menuOpen]);
 
-  const scrollToSection = (href: string) => {
-    const el = document.querySelector(href);
-    el?.scrollIntoView({ behavior: "smooth" });
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+
+  const updateActiveSection = (href: string) => {
+    setActive(href);
   };
 
   return (
@@ -117,8 +145,8 @@ export default function Header() {
         ref={scope}
         className="fixed top-0 left-0 right-0 z-50 bg-transparent backdrop-blur-md"
       >
-        <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-         <div className="nav-logo">
+        <nav className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
+         <div className="nav-logo" data-magnetic>
           <Image
             src="/jeet-logo.png" // put your generated PNG in the public folder
             alt="Jeet.dev Logo"
@@ -132,30 +160,35 @@ export default function Header() {
           <ul className="hidden md:flex items-center gap-6">
             {menu.map((item) => (
               <li key={item.id} className="nav-item">
-                <button
-                  onClick={() => scrollToSection(item.href)}
-                  className={`relative text-sm transition-colors ${
+                <a
+                  href={item.href}
+                  onClick={() => updateActiveSection(item.href)}
+                  className={`nav-link relative text-sm transition-colors ${
                     active === item.href
-                      ? "text-white"
-                      : "text-gray-300 hover:text-white"
+                      ? "text-ink"
+                      : "text-caption hover:text-ink"
                   }`}
+                  aria-current={active === item.href ? "page" : undefined}
                 >
                   {item.label}
                   <span
-                    className={`absolute left-0 -bottom-1 h-[2px] bg-white transition-all duration-300 ${
+                    className={`absolute left-0 -bottom-1 h-[2px] bg-accent transition-all duration-300 ${
                       active === item.href ? "w-full" : "w-0"
                     }`}
                   />
-                </button>
+                </a>
               </li>
             ))}
           </ul>
 
           {/* Mobile toggle */}
           <button
-            className="md:hidden text-white text-xl"
+            type="button"
+            className="md:hidden text-ink text-xl"
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-navigation"
           >
             ☰
           </button>
@@ -164,22 +197,25 @@ export default function Header() {
 
       {/* Mobile menu */}
       <div
+        id="mobile-navigation"
         ref={mobileMenuRef}
         className={`fixed inset-0 z-40 bg-black text-white flex flex-col items-center justify-center gap-8 md:hidden ${
           menuOpen ? "pointer-events-auto" : "pointer-events-none"
         }`}
+        aria-hidden={!menuOpen}
       >
         {menu.map((item) => (
-          <button
+          <a
             key={item.id}
+            href={item.href}
             onClick={() => {
-              scrollToSection(item.href);
+              updateActiveSection(item.href);
               setMenuOpen(false);
             }}
-            className="nav-link mobile-nav-item text-2xl"
+            className="nav-link mobile-nav-item text-2xl text-ink"
           >
             {item.label}
-          </button>
+          </a>
         ))}
       </div>
     </>
