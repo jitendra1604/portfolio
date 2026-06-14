@@ -17,26 +17,29 @@ export default function HeroSection() {
   const [headlineIndex, setHeadlineIndex] = useState(0);
   const headlineRefs = useRef<HTMLSpanElement[]>([]); // Two spans for crossfade
 
-  const animateHeadline = useCallback((nextIndex: number) => {
-    if (!headlineRefs.current[0] || !headlineRefs.current[1]) return;
+  const animateHeadline = useCallback(
+    (nextIndex: number) => {
+      if (!headlineRefs.current[0] || !headlineRefs.current[1]) return;
 
-    const current = headlineRefs.current[0];
-    const next = headlineRefs.current[1];
+      const current = headlineRefs.current[0];
+      const next = headlineRefs.current[1];
 
-    next.textContent = headlineOptions[nextIndex];
-    gsap.set(next, { y: 30, opacity: 0 });
+      next.textContent = headlineOptions[nextIndex];
+      gsap.set(next, { y: 30, opacity: 0 });
 
-    const tl = gsap.timeline();
-    tl.to(current, { y: -30, opacity: 0, duration: 0.5, ease: "power2.in" })
-      .to(
-        next,
-        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
-        "-=0.2",
-      )
-      .call(() => {
-        headlineRefs.current.reverse();
-      });
-  }, [headlineOptions]);
+      const tl = gsap.timeline();
+      tl.to(current, { y: -30, opacity: 0, duration: 0.5, ease: "power2.in" })
+        .to(
+          next,
+          { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+          "-=0.2",
+        )
+        .call(() => {
+          headlineRefs.current.reverse();
+        });
+    },
+    [headlineOptions],
+  );
 
   // Rotate headline every 6s
   useEffect(() => {
@@ -51,46 +54,48 @@ export default function HeroSection() {
     return () => clearInterval(interval);
   }, [animateHeadline, headlineOptions.length]);
 
-  const setupHeroAnimation = useCallback((gsapInstance: typeof gsap, scopeEl: HTMLElement) => {
-    const q = gsapInstance.utils.selector(scopeEl);
+  const setupHeroAnimation = useCallback(
+    (gsapInstance: typeof gsap, scopeEl: HTMLElement) => {
+      const q = gsapInstance.utils.selector(scopeEl);
 
-    gsapInstance.fromTo(
-      q(".hero-eyebrow"),
-      { y: 16, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.6, ease: "power2.out" }
-    );
+      gsapInstance.fromTo(
+        q(".hero-eyebrow"),
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power2.out" },
+      );
 
-    gsapInstance.fromTo(
-      q(".hero-panel"),
-      { y: 24, opacity: 0 },
-      { y: 0, opacity: 1, delay: 0.2, duration: 0.7, ease: "power3.out" }
-    );
+      gsapInstance.fromTo(
+        q(".hero-panel"),
+        { y: 24, opacity: 0 },
+        { y: 0, opacity: 1, delay: 0.2, duration: 0.7, ease: "power3.out" },
+      );
 
-    gsapInstance.fromTo(
-      q(".hero-subtitle"),
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, delay: 0.3, duration: 0.8, ease: "power2.out" }
-    );
+      gsapInstance.fromTo(
+        q(".hero-subtitle"),
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, delay: 0.3, duration: 0.8, ease: "power2.out" },
+      );
 
-    gsapInstance.fromTo(
-      q(".hero-cta"),
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, delay: 0.5, duration: 0.8, ease: "power2.out" }
-    );
+      gsapInstance.fromTo(
+        q(".hero-cta"),
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, delay: 0.5, duration: 0.8, ease: "power2.out" },
+      );
 
-    // Image parallax
-    gsapInstance.to(q(".hero-image"), {
-      y: 60,
-      scale: 1.05,
-      ease: "power1.out",
-      scrollTrigger: {
-        trigger: scopeEl,
-        start: "top top",
-        end: "bottom top",
-        scrub: 0.3,
-      },
-    });
-  }, []);
+      // Image parallax
+      gsapInstance.to(q(".hero-image"), {
+        y: 25,
+        ease: "power1.out",
+        scrollTrigger: {
+          trigger: scopeEl,
+          start: "top top",
+          end: "bottom top",
+          scrub: 0.3,
+        },
+      });
+    },
+    [],
+  );
 
   const { scope } = useGsap(setupHeroAnimation);
 
@@ -106,7 +111,7 @@ export default function HeroSection() {
       <div className="absolute inset-y-0 right-0 z-0 w-[42%] bg-gradient-to-l from-black via-black/88 to-transparent" />
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100svh-4rem)] w-full max-w-[1200px] flex-col justify-center px-6 pb-10 pt-10 sm:pb-12 sm:pt-12 md:px-8 lg:pt-14">
-        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)] lg:gap-16">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           <div className="flex flex-col">
             <div className="hero-eyebrow mb-5 inline-flex w-fit items-center gap-3 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-caption backdrop-blur">
               <span className="h-2 w-2 rounded-full bg-accent" />
@@ -161,23 +166,57 @@ export default function HeroSection() {
             </div>
           </div>
 
-          <div className="hero-panel relative mx-auto w-full max-w-[500px] lg:max-w-[620px]">
+          <div className="hero-panel relative h-[clamp(600px,90vh,900px)] w-full overflow-visible">
             {/* soft ambient depth behind the subject */}
-            <div className="absolute left-1/2 top-1/3 hidden h-64 w-64 -translate-x-1/2 rounded-full bg-white/[0.03] blur-3xl lg:block" />
+            <div className="absolute left-1/2 top-1/4 hidden h-72 w-72 -translate-x-1/2 rounded-full bg-white/[0.04] blur-3xl lg:block" />
+            <div
+              className="
+    absolute
+    left-1/2
+    -translate-x-1/2
+    top-[-40px]
+    h-[105%]
+    w-[100%]
+right-[-10%]
+    md:top-[-60px]
+    md:w-[115%]
+ md:right-[-10%]
+    lg:left-auto
+    lg:translate-x-0
+    lg:right-[-10%]
+    lg:top-[-90px]
+    lg:w-[125%]
 
-            <div className="relative aspect-[4/5]">
+    xl:right-[-36%]
+    xl:w-[1030%]
+  "
+            >
               <Image
                 src="/profile.png"
-                alt="Portrait of Jeet, senior full stack developer, looking toward the camera"
+                alt="Portrait of Jeet"
                 fill
                 priority
-                sizes="(max-width: 1024px) 80vw, 620px"
-                className="hero-image relative z-10 object-contain object-right opacity-95 [mask-image:radial-gradient(115%_120%_at_56%_42%,#000_46%,rgba(0,0,0,0.6)_68%,transparent_86%)] [-webkit-mask-image:radial-gradient(115%_120%_at_56%_42%,#000_46%,rgba(0,0,0,0.6)_68%,transparent_86%)]"
+                sizes="(max-width: 1024px) 85vw, 700px"
+                className="
+  hero-image
+  object-contain
+  object-bottom
+  object-center
+  lg:object-right
+"
               />
-
-              {/* ground the portrait into the page background — exact black point match, no rectangular seam */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-32 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/70 to-transparent" />
             </div>
+            {/* <Image
+              src="/profile-hero-alpha 2.png"
+              alt="Portrait of Jeet, senior full stack developer, looking toward the camera"
+              fill
+              priority
+              sizes="(max-width: 1024px) 85vw, 600px"
+              className="hero-image relative z-10 scale-110 object-contain object-bottom object-left opacity-95 [mask-image:radial-gradient(125%_130%_at_50%_38%,#000_54%,rgba(0,0,0,0.6)_74%,transparent_90%)] [-webkit-mask-image:radial-gradient(125%_130%_at_50%_38%,#000_54%,rgba(0,0,0,0.6)_74%,transparent_90%)]"
+            /> */}
+
+            {/* ground the portrait into the page background — exact black point match, no rectangular seam */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent" />
           </div>
         </div>
       </div>
