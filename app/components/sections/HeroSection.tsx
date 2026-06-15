@@ -14,45 +14,64 @@ export default function HeroSection() {
     { value: "12", label: "Developers led" },
   ];
 
-  const [headlineIndex, setHeadlineIndex] = useState(0);
+  // const [headlineIndex, setHeadlineIndex] = useState(0);
+  const currentIndex = useRef(0);
   const headlineRefs = useRef<HTMLSpanElement[]>([]); // Two spans for crossfade
 
-  const animateHeadline = useCallback(
-    (nextIndex: number) => {
-      if (!headlineRefs.current[0] || !headlineRefs.current[1]) return;
+const animateHeadline = useCallback(
+  (nextIndex: number) => {
+    const current = headlineRefs.current[0];
+    const next = headlineRefs.current[1];
 
-      const current = headlineRefs.current[0];
-      const next = headlineRefs.current[1];
+    if (!current || !next) return;
 
-      next.textContent = headlineOptions[nextIndex];
-      gsap.set(next, { y: 30, opacity: 0 });
+    next.textContent = headlineOptions[nextIndex];
 
-      const tl = gsap.timeline();
-      tl.to(current, { y: -30, opacity: 0, duration: 0.5, ease: "power2.in" })
-        .to(
-          next,
-          { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
-          "-=0.2",
-        )
-        .call(() => {
-          headlineRefs.current.reverse();
-        });
-    },
-    [headlineOptions],
-  );
+    gsap.set(next, {
+      y: 40,
+      opacity: 0,
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+    });
 
-  // Rotate headline every 6s
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHeadlineIndex((currentIndex) => {
-        const nextIndex = (currentIndex + 1) % headlineOptions.length;
-        animateHeadline(nextIndex);
-        return nextIndex;
-      });
-    }, 6000);
+    const tl = gsap.timeline();
 
-    return () => clearInterval(interval);
-  }, [animateHeadline, headlineOptions.length]);
+    tl.to(current, {
+      y: -40,
+      opacity: 0,
+      duration: 0.5,
+      ease: "power2.in",
+    }).to(
+      next,
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.7,
+        ease: "power3.out",
+      },
+      "-=0.2",
+    );
+
+    tl.call(() => {
+      headlineRefs.current.reverse();
+    });
+  },
+  [headlineOptions],
+);
+useEffect(() => {
+  const interval = setInterval(() => {
+    const nextIndex =
+      (currentIndex.current + 1) % headlineOptions.length;
+
+    animateHeadline(nextIndex);
+
+    currentIndex.current = nextIndex;
+  }, 6000);
+
+  return () => clearInterval(interval);
+}, [animateHeadline, headlineOptions.length]);
 
   const setupHeroAnimation = useCallback(
     (gsapInstance: typeof gsap, scopeEl: HTMLElement) => {
@@ -85,7 +104,6 @@ export default function HeroSection() {
       // Image parallax
       gsapInstance.to(q(".hero-image"), {
         y: 25,
-        ease: "power1.out",
         scrollTrigger: {
           trigger: scopeEl,
           start: "top top",
@@ -111,28 +129,63 @@ export default function HeroSection() {
       <div className="absolute inset-y-0 right-0 z-0 w-[42%] bg-gradient-to-l from-black via-black/88 to-transparent" />
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100svh-4rem)] w-full max-w-[1200px] flex-col justify-center px-6 pb-10 pt-10 sm:pb-12 sm:pt-12 md:px-8 lg:pt-14">
-        <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
+        <div className="grid items-start gap-10 lg:grid-cols-[1.25fr_0.75fr] lg:gap-12">
           <div className="flex flex-col">
             <div className="hero-eyebrow mb-5 inline-flex w-fit items-center gap-3 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-caption backdrop-blur">
               <span className="h-2 w-2 rounded-full bg-accent" />
               Senior Full Stack Developer
             </div>
 
-            <h1 className="hero-headline relative min-h-[210px] overflow-hidden text-4xl font-semibold leading-[1.02] tracking-[-0.04em] sm:min-h-[240px] sm:text-5xl md:min-h-[280px] md:text-6xl lg:min-h-[320px] lg:text-7xl">
-              <div
+            <h1
+  className="
+    hero-headline
+    relative
+    h-[210px]
+    sm:h-[240px]
+    md:h-[280px]
+    lg:h-[320px]
+    overflow-hidden
+    text-4xl
+    font-semibold
+    leading-[1.02]
+    tracking-[-0.04em]
+    sm:text-5xl
+    md:text-6xl
+    lg:text-7xl
+  "
+>
+             <div
                 ref={(el) => {
-                  headlineRefs.current[0] = el!;
+                  if (el) headlineRefs.current[0] = el;
                 }}
-                className="hero-title inline-block max-w-4xl will-change-transform"
+                className="
+                  hero-title
+                  absolute
+                  left-0
+                  top-0
+                  block
+                  w-full
+                  max-w-[700px]
+                  will-change-transform
+                "
               >
-                {headlineOptions[headlineIndex]}
+                {headlineOptions[0]}
               </div>
-
               <div
                 ref={(el) => {
-                  headlineRefs.current[1] = el!;
+                  if (el) headlineRefs.current[1] = el;
                 }}
-                className="absolute left-0 top-0 inline-block w-full max-w-4xl opacity-0 will-change-transform"
+                className="
+                  hero-title
+                  absolute
+                  left-0
+                  top-0
+                  block
+                  w-full
+                  max-w-[700px]
+                  opacity-0
+                  will-change-transform
+                "
               />
             </h1>
 
@@ -171,25 +224,25 @@ export default function HeroSection() {
             <div className="absolute left-1/2 top-1/4 hidden h-72 w-72 -translate-x-1/2 rounded-full bg-white/[0.04] blur-3xl lg:block" />
             <div
               className="
-    absolute
-    left-1/2
-    -translate-x-1/2
-    top-[-40px]
-    h-[105%]
-    w-[100%]
-right-[-10%]
-    md:top-[-60px]
-    md:w-[115%]
- md:right-[-10%]
-    lg:left-auto
-    lg:translate-x-0
-    lg:right-[-10%]
-    lg:top-[-90px]
-    lg:w-[125%]
+                    absolute
+                    left-1/2
+                    -translate-x-1/2
+                    top-[-40px]
+                    h-[105%]
+                    w-[100%]
+                right-[-10%]
+                    md:top-[-60px]
+                    md:w-[115%]
+                md:right-[-10%]
+                    lg:left-auto
+                    lg:translate-x-0
+                    lg:right-[-10%]
+                    lg:top-[-90px]
+                    lg:w-[110%]
 
-    xl:right-[-36%]
-    xl:w-[1030%]
-  "
+                    xl:right-[-25%]
+                    xl:w-[115%]
+                  "
             >
               <Image
                 src="/profile.png"
@@ -198,22 +251,14 @@ right-[-10%]
                 priority
                 sizes="(max-width: 1024px) 85vw, 700px"
                 className="
-  hero-image
-  object-contain
-  object-bottom
-  object-center
-  lg:object-right
-"
+                  hero-image
+                  object-contain
+                  object-bottom
+                  object-center
+                  lg:object-right
+                "
               />
             </div>
-            {/* <Image
-              src="/profile-hero-alpha 2.png"
-              alt="Portrait of Jeet, senior full stack developer, looking toward the camera"
-              fill
-              priority
-              sizes="(max-width: 1024px) 85vw, 600px"
-              className="hero-image relative z-10 scale-110 object-contain object-bottom object-left opacity-95 [mask-image:radial-gradient(125%_130%_at_50%_38%,#000_54%,rgba(0,0,0,0.6)_74%,transparent_90%)] [-webkit-mask-image:radial-gradient(125%_130%_at_50%_38%,#000_54%,rgba(0,0,0,0.6)_74%,transparent_90%)]"
-            /> */}
 
             {/* ground the portrait into the page background — exact black point match, no rectangular seam */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent" />
