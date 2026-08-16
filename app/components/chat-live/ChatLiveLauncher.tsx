@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import gsap from "gsap";
 import { useGsap } from "@/hooks/useGsap";
 import { useAblyChatRoom } from "@/hooks/useAblyChatRoom";
+import { useChatBubbleAnimation } from "@/hooks/useChatBubbleAnimation";
 import { playReceivedSound, playSentSound } from "@/lib/chat-sounds";
 
 const ROOM_STORAGE_KEY = "chat-live-room-id";
@@ -44,6 +45,7 @@ export default function ChatLiveLauncher() {
     role: "visitor",
     displayName: name ?? undefined,
   });
+  const registerBubble = useChatBubbleAnimation(messages);
 
   useEffect(() => {
     if (status === "closed") {
@@ -223,7 +225,8 @@ export default function ChatLiveLauncher() {
                   messages.map((message) => (
                     <div
                       key={message.id}
-                      className={`animate-message-pop max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
+                      ref={registerBubble(message.id)}
+                      className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
                         message.from === "visitor"
                           ? "ml-auto bg-ink text-[#0a0a0a]"
                           : "bg-white/[0.04] text-body"

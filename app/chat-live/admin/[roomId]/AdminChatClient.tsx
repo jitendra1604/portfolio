@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAblyChatRoom } from "@/hooks/useAblyChatRoom";
+import { useChatBubbleAnimation } from "@/hooks/useChatBubbleAnimation";
 import { playReceivedSound, playSentSound } from "@/lib/chat-sounds";
 
 const SECRET_STORAGE_KEY = "chat-live-admin-secret";
@@ -41,6 +42,7 @@ export default function AdminChatClient({
     role: "admin",
     adminSecret: adminSecret ?? undefined,
   });
+  const registerBubble = useChatBubbleAnimation(messages);
 
   useEffect(() => {
     if (status === "error" && adminSecret) {
@@ -147,7 +149,8 @@ export default function AdminChatClient({
           messages.map((message) => (
             <div
               key={message.id}
-              className={`animate-message-pop max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-6 ${
+              ref={registerBubble(message.id)}
+              className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-6 ${
                 message.from === "jeet" ? "ml-auto bg-ink text-[#0a0a0a]" : "bg-white/[0.04] text-body"
               }`}
             >

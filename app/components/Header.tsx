@@ -7,6 +7,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -14,7 +15,22 @@ export default function Header() {
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileTl = useRef<gsap.core.Timeline | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [active, setActive] = useState("#home");
+  const [active, setActive] = useState("/#home");
+  const pathname = usePathname();
+
+  // Scroll-spy only knows about hash sections on "/" — on any other route
+  // (e.g. /blog) fall back to matching the route itself, so the nav doesn't
+  // keep showing "Home" as active while you're on the blog.
+  useEffect(() => {
+    const routeItem = menu.find(
+      (item) => !item.href.includes("#") && (pathname === item.href || pathname.startsWith(`${item.href}/`))
+    );
+    if (routeItem) {
+      setActive(routeItem.href);
+    } else if (pathname === "/") {
+      setActive("/#home");
+    }
+  }, [pathname]);
 
   const { scope } = useGsap((gsap, scopeEl) => {
     const triggers: ScrollTrigger[] = [];
@@ -59,8 +75,10 @@ export default function Header() {
 
     // Active section detection
     menu.forEach((item) => {
-      if (!item.href.startsWith("#")) return;
-      const section = document.querySelector(item.href);
+      const hashIndex = item.href.indexOf("#");
+      if (hashIndex === -1) return;
+      const hash = item.href.slice(hashIndex);
+      const section = document.querySelector(hash);
       if (!section) return;
 
       const trigger = ScrollTrigger.create({
@@ -138,7 +156,7 @@ export default function Header() {
   }, []);
 
   const updateActiveSection = (href: string) => {
-    if (href.startsWith("#")) setActive(href);
+    if (href.includes("#")) setActive(href);
   };
 
   return (
@@ -149,13 +167,15 @@ export default function Header() {
       >
         <nav className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
          <div className="nav-logo" data-magnetic>
-          <Image
-            src="/jeet-logo.png" // put your generated PNG in the public folder
-            alt="Jeet.dev Logo"
-            width={180} // adjust as needed
-            height={40} // adjust as needed
-            priority
-          />
+          <Link href="/#home" aria-label="Go to home">
+            <Image
+              src="/jeet-logo.png" // put your generated PNG in the public folder
+              alt="Jeet.dev Logo"
+              width={180} // adjust as needed
+              height={40} // adjust as needed
+              priority
+            />
+          </Link>
         </div>
 
           {/* Desktop menu */}
