@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useGsap } from "@/hooks/useGsap";
 import gsap from "gsap";
 import Image from "next/image";
-import portfolioData from "@/data/portfolio.json";
+import { portfolioData } from "@/lib/portfolio";
 
 export default function HeroSection() {
   const { headlineOptions, subtitle, ctaText } = portfolioData.hero;

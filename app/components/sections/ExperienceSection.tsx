@@ -1,7 +1,7 @@
 "use client";
 
 import { useGsap } from "@/hooks/useGsap";
-import portfolioData from "@/data/portfolio.json";
+import { portfolioData } from "@/lib/portfolio";
 
 export default function ExperienceSection() {
   const experiences = portfolioData?.experience ?? [];

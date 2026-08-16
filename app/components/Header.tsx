@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
+import Link from "next/link";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -58,6 +59,7 @@ export default function Header() {
 
     // Active section detection
     menu.forEach((item) => {
+      if (!item.href.startsWith("#")) return;
       const section = document.querySelector(item.href);
       if (!section) return;
 
@@ -136,7 +138,7 @@ export default function Header() {
   }, []);
 
   const updateActiveSection = (href: string) => {
-    setActive(href);
+    if (href.startsWith("#")) setActive(href);
   };
 
   return (
@@ -160,7 +162,7 @@ export default function Header() {
           <ul className="hidden md:flex items-center gap-6">
             {menu.map((item) => (
               <li key={item.id} className="nav-item">
-                <a
+                <Link
                   href={item.href}
                   onClick={() => updateActiveSection(item.href)}
                   className={`nav-link relative text-sm transition-colors ${
@@ -176,7 +178,7 @@ export default function Header() {
                       active === item.href ? "w-full" : "w-0"
                     }`}
                   />
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
@@ -205,7 +207,7 @@ export default function Header() {
         aria-hidden={!menuOpen}
       >
         {menu.map((item) => (
-          <a
+          <Link
             key={item.id}
             href={item.href}
             onClick={() => {
@@ -215,7 +217,7 @@ export default function Header() {
             className="nav-link mobile-nav-item text-2xl text-ink"
           >
             {item.label}
-          </a>
+          </Link>
         ))}
       </div>
     </>

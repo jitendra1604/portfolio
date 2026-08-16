@@ -1,8 +1,7 @@
 # Jeet — Portfolio
 
-A dark-theme developer portfolio built with the Next.js App Router, GSAP scroll
-animations, and an AI assistant that answers questions about the portfolio using
-semantic search over its content.
+A dark-theme developer portfolio built with the Next.js App Router and GSAP
+scroll animations.
 
 ## Tech stack
 
@@ -10,7 +9,6 @@ semantic search over its content.
 - **TypeScript** (strict)
 - **Tailwind CSS v4** with a token-based design system (`app/globals.css`)
 - **GSAP** + ScrollTrigger for entrance/scroll animations
-- **OpenAI** (optional) for the chatbot — falls back to keyword search without a key
 
 ## Requirements
 
@@ -25,7 +23,7 @@ semantic search over its content.
 ```bash
 nvm use
 npm install
-cp .env.example .env.local   # optional: add your OPENAI_API_KEY
+cp .env.example .env.local   # optional: add SMTP creds for the contact form
 npm run dev
 ```
 
@@ -47,9 +45,6 @@ See [`.env.example`](./.env.example). All are optional in development.
 | Variable                  | Purpose                                                        |
 | ------------------------- | -------------------------------------------------------------- |
 | `NEXT_PUBLIC_SITE_URL`    | Canonical URL for metadata, OpenGraph, robots, and sitemap     |
-| `OPENAI_API_KEY`          | Enables OpenAI-backed chat (omitted → keyword-search fallback) |
-| `OPENAI_CHAT_MODEL`       | Chat model (default `gpt-4.1-mini`)                            |
-| `OPENAI_EMBEDDING_MODEL`  | Embedding model (default `text-embedding-3-small`)            |
 | `SMTP_HOST` / `SMTP_PORT` | SMTP server (default `smtp.gmail.com` / `465`)                 |
 | `SMTP_USER` / `SMTP_PASS` | SMTP login — for Gmail use an **App Password**                 |
 | `CONTACT_TO`              | Where contact messages are delivered (default `SMTP_USER`)     |
@@ -63,8 +58,8 @@ See [`.env.example`](./.env.example). All are optional in development.
 
 ```
 app/
-  api/               # chat + contact route handlers
-  components/        # UI; sections/ holds the page sections, ai/ the chatbot
+  api/               # contact route handler
+  components/        # UI; sections/ holds the page sections
   layout.tsx         # fonts, metadata/SEO
   page.tsx           # composes the single-page sections
   robots.ts          # robots.txt
@@ -72,13 +67,13 @@ app/
 src/
   data/              # portfolio.json — single source of truth for all content
   hooks/useGsap.ts   # scoped GSAP setup with cleanup
-  lib/               # ai, embeddings, portfolio data transforms
+  lib/               # contact, mailer, portfolio data transforms
   types/             # shared TypeScript types
 ```
 
 ## Editing content
 
-All copy, projects, experience, and chatbot prompts live in
+All copy, projects, and experience live in
 [`src/data/portfolio.json`](./src/data/portfolio.json). Navigation lives in
 [`src/data/menu.json`](./src/data/menu.json); keep its `href` values in sync with
 the section `id`s.

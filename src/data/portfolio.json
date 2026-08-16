@@ -384,16 +384,5 @@
     "email": "sutharjitendra2@gmail.com",
     "linkedin": "https://linkedin.com/in/jitendra-s-435639167",
     "github": "https://github.com/jitendra1604"
-  },
-  "ai": {
-    "title": "Ask About Me",
-    "suggestedQuestions": [
-      "Who is Jeet?",
-      "Explain your projects",
-      "What tech do you use?",
-      "How do you use AI in your workflow?",
-      "Which project best shows your system design skills?"
-    ],
-    "systemPrompt": "You are Jeet's portfolio AI assistant. Answer with a confident, engineering-focused tone. Keep answers concise, clear, and grounded in the provided portfolio context. Highlight system design, technical tradeoffs, delivery thinking, and the actual technologies mentioned in the portfolio data."
   }
 }

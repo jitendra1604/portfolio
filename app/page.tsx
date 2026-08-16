@@ -33,8 +33,13 @@ const ContactSection = dynamic(
     loading: () => <SectionSkeleton titleWidth="w-48" />,
   }
 );
-
-const Chatbot = dynamic(() => import("./components/ai/Chatbot"));
+const LiveSystemConsole = dynamic(() => import("./components/LiveSystemConsole"), {
+  loading: () => <SectionSkeleton titleWidth="w-52" />,
+});
+const BuildingInPublicSection = dynamic(
+  () => import("./components/sections/BuildingInPublicSection"),
+  { loading: () => <SectionSkeleton titleWidth="w-60" /> }
+);
 
 export default function Home() {
   return (
@@ -42,10 +47,11 @@ export default function Home() {
       <HeroSection />
       <AboutSection />
       <ProjectsSection />
+      <BuildingInPublicSection />
       <HowIBuildSection />
       <ExperienceSection />
       <ContactSection />
-      <Chatbot />
+      <LiveSystemConsole />
     </>
   );
 }

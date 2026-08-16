@@ -68,25 +68,16 @@ export type PortfolioData = {
     linkedin: string;
     github: string;
   };
-  ai: {
-    title: string;
-    suggestedQuestions: string[];
-    systemPrompt: string;
-  };
 };
 
 export type ContactPayload = {
   name: string;
   email: string;
   message: string;
+  website?: string;
 };
 
 export type ContactResponse = {
   ok: boolean;
   message: string;
-};
-
-export type ChatMessage = {
-  role: "user" | "assistant";
-  content: string;
 };

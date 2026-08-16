@@ -4,12 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGsap } from "@/hooks/useGsap";
 import { portfolioData } from "@/lib/portfolio";
+import { flagshipProjectSlugs } from "@/lib/site";
+import { track } from "@vercel/analytics";
+import ArchitectureDiagram from "../ArchitectureDiagram";
 
 export default function ProjectsSection() {
   const projects = useMemo(() => portfolioData.projects ?? [], []);
-  const [openProject, setOpenProject] = useState<string | null>(
-    projects[0]?.slug ?? null
-  );
+  const [openProject, setOpenProject] = useState<string | null>(null);
   const detailRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const animateSection = useCallback((gsapInstance: typeof gsap, scopeEl: HTMLElement) => {
@@ -111,9 +112,10 @@ export default function ProjectsSection() {
         <div className="grid gap-6">
           {projects.map((project) => {
             const isOpen = openProject === project.slug;
+            const isFlagship = flagshipProjectSlugs.includes(project.slug);
 
             return (
-              <article key={project.slug} className="project-card card">
+              <article key={project.slug} className="project-card card" onClick={() => track("project_card_clicked", { project: project.slug })}>
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                   <div className="max-w-3xl">
                     <div className="flex flex-wrap gap-3">
@@ -134,21 +136,22 @@ export default function ProjectsSection() {
                       {project.description}
                     </p>
 
-                    <ul className="mt-6 space-y-2 text-sm leading-6 text-body">
+                    {isFlagship && <ul className="mt-6 space-y-2 text-sm leading-6 text-body">
                       {project.highlights.map((item) => (
                         <li key={item}>{item}</li>
                       ))}
-                    </ul>
+                    </ul>}
                   </div>
 
                   <div className="flex shrink-0 items-start">
                     <button
                       type="button"
-                      onClick={() =>
-                        setOpenProject((current) =>
-                          current === project.slug ? null : project.slug
-                        )
-                      }
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        const next = isOpen ? null : project.slug;
+                        setOpenProject(next);
+                        if (next) track("project_details_toggled", { project: project.slug });
+                      }}
                       aria-expanded={isOpen}
                       className="btn btn-secondary"
                     >
@@ -184,22 +187,23 @@ export default function ProjectsSection() {
                     display: isOpen ? "block" : "none",
                   }}
                 >
-                  <div className="mt-8 grid gap-6 border-t border-line pt-8 lg:grid-cols-[1.2fr_0.8fr]">
+                  {isFlagship ? <div className="mt-8 grid gap-6 border-t border-line pt-8 lg:grid-cols-[1.2fr_0.8fr]">
                     <div className="space-y-6">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.28em] text-caption">
+                        <h4 className="text-xs uppercase tracking-[0.28em] text-caption">
                           Architecture
-                        </p>
+                        </h4>
                         <p className="mt-3 text-sm leading-7 text-body">
                           {project.detail.architecture}
                         </p>
+                        <ArchitectureDiagram decisions={project.detail.decisions} />
                       </div>
 
                       <div className="grid gap-6 md:grid-cols-2">
                         <div>
-                          <p className="text-xs uppercase tracking-[0.28em] text-caption">
+                          <h4 className="text-xs uppercase tracking-[0.28em] text-caption">
                             Technical Decisions
-                          </p>
+                          </h4>
                           <ul className="mt-3 space-y-3 text-sm leading-7 text-body">
                             {project.detail.decisions.map((decision) => (
                               <li key={decision}>{decision}</li>
@@ -208,9 +212,9 @@ export default function ProjectsSection() {
                         </div>
 
                         <div>
-                          <p className="text-xs uppercase tracking-[0.28em] text-caption">
+                          <h4 className="text-xs uppercase tracking-[0.28em] text-caption">
                             Delivery Challenges
-                          </p>
+                          </h4>
                           <ul className="mt-3 space-y-3 text-sm leading-7 text-body">
                             {project.detail.challenges.map((challenge) => (
                               <li key={challenge}>{challenge}</li>
@@ -222,9 +226,9 @@ export default function ProjectsSection() {
 
                     <div className="space-y-6">
                       <div className="rounded-xl border border-line bg-black/30 p-5">
-                        <p className="text-xs uppercase tracking-[0.28em] text-caption">
+                        <h4 className="text-xs uppercase tracking-[0.28em] text-caption">
                           System Flow
-                        </p>
+                        </h4>
                         <ol className="mt-4 space-y-3 text-sm leading-7 text-body">
                           {project.detail.flow.map((step, index) => (
                             <li key={step}>
@@ -238,9 +242,9 @@ export default function ProjectsSection() {
                       </div>
 
                       <div className="rounded-xl border border-line bg-black/30 p-5">
-                        <p className="text-xs uppercase tracking-[0.28em] text-caption">
+                        <h4 className="text-xs uppercase tracking-[0.28em] text-caption">
                           Outcomes
-                        </p>
+                        </h4>
                         <ul className="mt-4 space-y-3 text-sm leading-7 text-body">
                           {project.detail.outcomes.map((outcome) => (
                             <li key={outcome}>{outcome}</li>
@@ -249,9 +253,9 @@ export default function ProjectsSection() {
                       </div>
 
                       <div className="rounded-xl border border-line bg-black/30 p-5">
-                        <p className="text-xs uppercase tracking-[0.28em] text-caption">
+                        <h4 className="text-xs uppercase tracking-[0.28em] text-caption">
                           Screens / Flows
-                        </p>
+                        </h4>
                         <div className="mt-4 flex flex-wrap gap-3">
                           {project.detail.screens?.map((screen) => (
                             <span
@@ -264,7 +268,7 @@ export default function ProjectsSection() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </div> : <div className="mt-8 border-t border-line pt-7"><h4 className="text-xs uppercase tracking-[0.28em] text-caption">Project details</h4><ul className="mt-3 space-y-2 text-sm leading-6 text-body">{project.highlights.map((item) => <li key={item}>{item}</li>)}</ul></div>}
                 </div>
               </article>
             );

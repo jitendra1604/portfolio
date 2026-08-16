@@ -5,11 +5,13 @@ import gsap from "gsap";
 import { useGsap } from "@/hooks/useGsap";
 import { portfolioData } from "@/lib/portfolio";
 import type { ContactPayload, ContactResponse } from "@/types/portfolio";
+import { track } from "@vercel/analytics";
 
 const initialFormState: ContactPayload = {
   name: "",
   email: "",
   message: "",
+  website: "",
 };
 
 export default function ContactSection() {
@@ -102,6 +104,7 @@ export default function ContactSection() {
       setFeedback(payload.message);
 
       if (payload.ok) {
+        track("contact_form_submitted");
         setForm(initialFormState);
       }
     } catch {
@@ -163,6 +166,8 @@ export default function ContactSection() {
               {status === "success" ? (
                 <div
                   ref={successBadgeRef}
+                  role="status"
+                  aria-live="polite"
                   className="rounded-2xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-4 text-sm text-emerald-100"
                 >
                   {feedback}
@@ -173,6 +178,10 @@ export default function ContactSection() {
 
           <div className="contact-right rounded-xl border border-line bg-surface p-6 sm:p-8">
             <form className="space-y-8" onSubmit={onSubmit}>
+              <div className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+                <label htmlFor="contact-website">Website</label>
+                <input id="contact-website" name="website" tabIndex={-1} autoComplete="off" value={form.website} onChange={(event) => setForm((current) => ({ ...current, website: event.target.value }))} />
+              </div>
               <div className="relative">
                 <label htmlFor="contact-name" className="mb-2 block text-sm text-caption">
                   Your Name
@@ -241,7 +250,7 @@ export default function ContactSection() {
                 </button>
 
                 {status === "error" ? (
-                  <p className="text-sm text-rose-300">{feedback}</p>
+                  <p role="alert" className="text-sm text-rose-300">{feedback}</p>
                 ) : (
                   <p className="text-sm text-caption">
                     Messages are handled through a lightweight API route and
