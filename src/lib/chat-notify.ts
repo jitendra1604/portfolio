@@ -1,4 +1,12 @@
+import { setDefaultResultOrder } from "node:dns";
 import { siteUrl } from "@/lib/site";
+
+// Works around a known Node `fetch` (undici) issue: it can try IPv6 first
+// when resolving api.telegram.org, and if the runtime's IPv6 egress path is
+// broken (observed on Vercel's serverless functions), the connection hangs
+// until ETIMEDOUT instead of falling back to IPv4 — even though curl or a
+// browser resolves fine. Forcing IPv4-first avoids the hang entirely.
+setDefaultResultOrder("ipv4first");
 
 const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
 const telegramChatId = process.env.TELEGRAM_CHAT_ID;
