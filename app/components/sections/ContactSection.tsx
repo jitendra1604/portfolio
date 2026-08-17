@@ -178,7 +178,7 @@ export default function ContactSection() {
 
           <div className="contact-right rounded-xl border border-line bg-surface p-6 sm:p-8">
             <form className="space-y-8" onSubmit={onSubmit}>
-              <div className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+              <div className="sr-only" aria-hidden="true">
                 <label htmlFor="contact-website">Website</label>
                 <input id="contact-website" name="website" tabIndex={-1} autoComplete="off" value={form.website} onChange={(event) => setForm((current) => ({ ...current, website: event.target.value }))} />
               </div>
@@ -251,12 +251,7 @@ export default function ContactSection() {
 
                 {status === "error" ? (
                   <p role="alert" className="text-sm text-rose-300">{feedback}</p>
-                ) : (
-                  <p className="text-sm text-caption">
-                    Messages are handled through a lightweight API route and
-                    logged for follow-up.
-                  </p>
-                )}
+                ) : null}
               </div>
             </form>
           </div>

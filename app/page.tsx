@@ -36,10 +36,6 @@ const ContactSection = dynamic(
 const LiveSystemConsole = dynamic(() => import("./components/LiveSystemConsole"), {
   loading: () => <SectionSkeleton titleWidth="w-52" />,
 });
-const BuildingInPublicSection = dynamic(
-  () => import("./components/sections/BuildingInPublicSection"),
-  { loading: () => <SectionSkeleton titleWidth="w-60" /> }
-);
 
 export default function Home() {
   return (
@@ -47,7 +43,6 @@ export default function Home() {
       <HeroSection />
       <AboutSection />
       <ProjectsSection />
-      <BuildingInPublicSection />
       <HowIBuildSection />
       <ExperienceSection />
       <ContactSection />

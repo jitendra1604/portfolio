@@ -35,6 +35,12 @@
 /* ------------------------------------------------------------------ */
 /*  Base                                                               */
 /* ------------------------------------------------------------------ */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 body {
   background: var(--color-background);
   color: var(--color-body);
@@ -151,6 +157,35 @@ section {
 .prose-portfolio ol {
   margin-top: 1rem;
   line-height: 1.8;
+}
+
+.prose-portfolio pre {
+  margin-top: 1.25rem;
+  overflow-x: auto;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  padding: 1rem;
+}
+
+.prose-portfolio code {
+  overflow-wrap: break-word;
+}
+
+.prose-portfolio pre code {
+  overflow-wrap: normal;
+}
+
+.prose-portfolio img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-card);
+}
+
+.prose-portfolio table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 /* ------------------------------------------------------------------ */

@@ -140,7 +140,7 @@ useEffect(() => {
   className="
     hero-headline
     relative
-    h-[210px]
+    h-[230px]
     sm:h-[240px]
     md:h-[280px]
     lg:h-[320px]

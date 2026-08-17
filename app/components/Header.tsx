@@ -169,10 +169,11 @@ export default function Header() {
          <div className="nav-logo" data-magnetic>
           <Link href="/#home" aria-label="Go to home">
             <Image
-              src="/jeet-logo.png" // put your generated PNG in the public folder
+              src="/jeet-logo-nav.png"
               alt="Jeet.dev Logo"
-              width={180} // adjust as needed
-              height={40} // adjust as needed
+              width={508}
+              height={260}
+              className="h-10 w-auto"
               priority
             />
           </Link>
@@ -206,7 +207,7 @@ export default function Header() {
           {/* Mobile toggle */}
           <button
             type="button"
-            className="md:hidden text-ink text-xl"
+            className="-mr-2 p-2 text-xl text-ink md:hidden"
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
@@ -221,7 +222,7 @@ export default function Header() {
       <div
         id="mobile-navigation"
         ref={mobileMenuRef}
-        className={`fixed inset-0 z-40 bg-black text-white flex flex-col items-center justify-center gap-8 md:hidden ${
+        className={`fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 overflow-y-auto bg-black py-20 text-white md:hidden ${
           menuOpen ? "pointer-events-auto" : "pointer-events-none"
         }`}
         aria-hidden={!menuOpen}
