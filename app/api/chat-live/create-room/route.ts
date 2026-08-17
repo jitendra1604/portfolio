@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { isAblyConfigured } from "@/lib/ably";
 import { notifyNewChatRoom } from "@/lib/chat-notify";
 import { clientIp, createRateLimiter } from "@/lib/rate-limit";
@@ -33,10 +33,15 @@ export async function POST(request: Request) {
 
   const roomId = randomUUID();
 
-  // Never block the visitor's room creation on a flaky third-party notifier.
-  notifyNewChatRoom(roomId, name).catch((error) => {
-    console.error("[chat-live] notifyNewChatRoom failed", error);
-  });
+  // Never block the visitor's room creation on a flaky third-party notifier,
+  // but still guarantee it runs to completion — Vercel can freeze the
+  // function the instant the response is sent, so a plain un-awaited
+  // promise here isn't reliably delivered under real traffic.
+  after(() =>
+    notifyNewChatRoom(roomId, name).catch((error) => {
+      console.error("[chat-live] notifyNewChatRoom failed", error);
+    })
+  );
 
   return NextResponse.json({ ok: true, roomId });
 }
