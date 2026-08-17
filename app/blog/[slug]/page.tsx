@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { compileMDX } from "next-mdx-remote/rsc";
 import JsonLd from "../../components/JsonLd";
+import ShareButtons from "../../components/ShareButtons";
 import { getAllPosts, getPostBySlug } from "@/lib/blog";
 import { siteIdentity, siteUrl } from "@/lib/site";
 
@@ -19,9 +20,30 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
-  return post
-    ? { title: post.title, description: post.description, alternates: { canonical: `/blog/${post.slug}` } }
-    : { title: "Post not found" };
+  if (!post) return { title: "Post not found" };
+
+  const url = `${siteUrl}/blog/${post.slug}`;
+  return {
+    title: post.title,
+    description: post.description,
+    alternates: { canonical: `/blog/${post.slug}` },
+    openGraph: {
+      type: "article",
+      url,
+      siteName: "Jeet — Portfolio",
+      title: post.title,
+      description: post.description,
+      publishedTime: post.date,
+      tags: [post.tag],
+      images: [{ url: "/profile.png", width: 1200, height: 630, alt: post.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.description,
+      images: ["/profile.png"],
+    },
+  };
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -47,6 +69,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <p className="mt-6 text-xs uppercase tracking-[0.2em] text-caption">{post.tag} · {post.date} · {post.readingTime} min read</p>
         <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-6xl">{post.title}</h1>
         <p className="mt-5 text-xl text-body">{post.description}</p>
+        <div className="mt-6">
+          <ShareButtons url={url} title={post.title} />
+        </div>
         <div className="mt-12 text-body">{renderedContent}</div>
       </div>
     </article>
