@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" font-family="Arial, Helvetica, sans-serif">
+  <rect width="1000" height="500" fill="#0a0a0a" />
+
+  <!-- Dashboard load -->
+  <rect x="300" y="30" width="400" height="80" rx="14" fill="#141414" stroke="#2a2a2a" stroke-width="1.5" />
+  <text x="500" y="65" text-anchor="middle" fill="#f5f5f5" font-size="20" font-weight="700">Dashboard load</text>
+  <text x="500" y="90" text-anchor="middle" fill="#a3a3a3" font-size="14">4–5 concurrent users</text>
+
+  <line x1="500" y1="110" x2="500" y2="152" stroke="#34d399" stroke-width="2" />
+  <polygon points="500,162 493,148 507,148" fill="#34d399" />
+
+  <!-- GET /orders -->
+  <rect x="300" y="160" width="400" height="80" rx="14" fill="#141414" stroke="#2a2a2a" stroke-width="1.5" />
+  <text x="500" y="195" text-anchor="middle" fill="#f5f5f5" font-size="20" font-weight="700">1× GET /orders</text>
+  <text x="500" y="220" text-anchor="middle" fill="#a3a3a3" font-size="14">one API call, per user</text>
+
+  <line x1="500" y1="240" x2="500" y2="282" stroke="#34d399" stroke-width="2" />
+  <polygon points="500,292 493,278 507,278" fill="#34d399" />
+
+  <!-- Single joined query -->
+  <rect x="200" y="300" width="600" height="80" rx="14" fill="#141414" stroke="#34d399" stroke-width="1.5" />
+  <text x="500" y="332" text-anchor="middle" fill="#f5f5f5" font-size="18" font-weight="700">Query 1 — the only query</text>
+  <text x="500" y="356" text-anchor="middle" fill="#a3a3a3" font-size="14">SELECT orders JOIN customers  (include: eager load)</text>
+
+  <line x1="500" y1="380" x2="500" y2="412" stroke="#34d399" stroke-width="2" />
+  <polygon points="500,422 493,408 507,408" fill="#34d399" />
+
+  <!-- Pool meter -->
+  <text x="500" y="444" text-anchor="middle" fill="#a3a3a3" font-size="14">Connection pool (max 10)</text>
+  <g>
+    <rect x="100" y="454" width="76" height="32" rx="6" fill="#525252" opacity="0.85" />
+    <rect x="184" y="454" width="76" height="32" rx="6" fill="#34d399" opacity="0.85" />
+    <rect x="268" y="454" width="76" height="32" rx="6" fill="#34d399" opacity="0.85" />
+    <rect x="352" y="454" width="76" height="32" rx="6" fill="#34d399" opacity="0.85" />
+    <rect x="436" y="454" width="76" height="32" rx="6" fill="#34d399" opacity="0.85" />
+    <rect x="520" y="454" width="76" height="32" rx="6" fill="#34d399" opacity="0.85" />
+    <rect x="604" y="454" width="76" height="32" rx="6" fill="#34d399" opacity="0.85" />
+    <rect x="688" y="454" width="76" height="32" rx="6" fill="#34d399" opacity="0.85" />
+    <rect x="772" y="454" width="76" height="32" rx="6" fill="#34d399" opacity="0.85" />
+    <rect x="856" y="454" width="76" height="32" rx="6" fill="#34d399" opacity="0.85" />
+  </g>
+</svg>
