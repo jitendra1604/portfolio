@@ -61,11 +61,11 @@ export default function RefinedAgencyCursor() {
       dotRest = 1;
       gsap.set([dot, ring], { mixBlendMode: "difference" });
       gsap.to(ring, {
-        width: 36,
-        height: 36,
+        width: 28,
+        height: 28,
         borderRadius: 999,
         backgroundColor: "rgba(255,255,255,0)",
-        borderColor: "rgba(255,255,255,0.6)",
+        borderColor: "rgba(255,255,255,0.35)",
         opacity: visible ? 1 : 0,
         duration: 0.4,
         ease: "power3.out",
@@ -221,6 +221,11 @@ export default function RefinedAgencyCursor() {
 
     toDefault();
 
+    // Only hide the native cursor once the replacement is actually wired up,
+    // and via a class we're guaranteed to remove on cleanup — never a static
+    // style that could outlive a failed/interrupted effect run.
+    document.documentElement.classList.add("custom-cursor-active");
+
     return () => {
       gsap.ticker.remove(tick);
       window.removeEventListener("mousemove", onMove);
@@ -228,6 +233,7 @@ export default function RefinedAgencyCursor() {
       window.removeEventListener("mouseup", onUp);
       document.removeEventListener("mouseleave", hide);
       document.removeEventListener("mouseenter", show);
+      document.documentElement.classList.remove("custom-cursor-active");
       if (magneticEl) resetMagnetic(magneticEl);
     };
   }, [enabled]);
@@ -244,18 +250,6 @@ export default function RefinedAgencyCursor() {
         ref={dotRef}
         className="pointer-events-none fixed left-0 top-0 z-[99999] h-1.5 w-1.5 rounded-full bg-white mix-blend-difference"
       />
-
-      <style jsx global>{`
-        * {
-          cursor: none !important;
-        }
-        input,
-        textarea,
-        select,
-        [contenteditable="true"] {
-          cursor: text !important;
-        }
-      `}</style>
     </>
   );
 }

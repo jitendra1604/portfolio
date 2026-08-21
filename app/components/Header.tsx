@@ -73,27 +73,54 @@ export default function Header() {
 
     window.addEventListener("scroll", onScroll, { passive: true });
 
-    // Active section detection
+    // Active section detection. Most sections below the hero are
+    // next/dynamic-loaded, so their DOM (and #id) doesn't exist yet on this
+    // first pass — only #home resolves immediately. Track what's still
+    // missing and watch the DOM for it, instead of silently giving up on
+    // every section that hasn't mounted yet.
+    const pendingHashes = new Set<string>();
+
+    const registerSection = (hash: string) => {
+      const item = menu.find((m) => m.href.endsWith(hash));
+      const section = document.querySelector(hash);
+      if (!item || !section) return false;
+
+      triggers.push(
+        ScrollTrigger.create({
+          trigger: section,
+          start: "top center",
+          end: "bottom center",
+          onEnter: () => setActive(item.href),
+          onEnterBack: () => setActive(item.href),
+        })
+      );
+      return true;
+    };
+
     menu.forEach((item) => {
       const hashIndex = item.href.indexOf("#");
       if (hashIndex === -1) return;
       const hash = item.href.slice(hashIndex);
-      const section = document.querySelector(hash);
-      if (!section) return;
-
-      const trigger = ScrollTrigger.create({
-        trigger: section,
-        start: "top center",
-        end: "bottom center",
-        onEnter: () => setActive(item.href),
-        onEnterBack: () => setActive(item.href),
-      });
-
-      triggers.push(trigger);
+      if (!registerSection(hash)) pendingHashes.add(hash);
     });
+
+    let observer: MutationObserver | null = null;
+    if (pendingHashes.size > 0) {
+      observer = new MutationObserver(() => {
+        pendingHashes.forEach((hash) => {
+          if (registerSection(hash)) pendingHashes.delete(hash);
+        });
+        if (pendingHashes.size === 0) {
+          observer?.disconnect();
+          ScrollTrigger.refresh();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
 
     return () => {
       window.removeEventListener("scroll", onScroll);
+      observer?.disconnect();
       triggers.forEach((trigger) => trigger.kill());
     };
   });
