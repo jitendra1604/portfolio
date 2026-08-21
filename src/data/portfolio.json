@@ -13,7 +13,7 @@
   },
   "about": {
     "title": "About Me",
-    "description": "I'm a results-driven Full Stack Developer with 5+ years of experience designing and building scalable web applications. My expertise spans frontend architecture, backend systems, cloud infrastructure, and DevOps automation. I focus on writing maintainable code, optimizing performance, and building systems that scale reliably in production.",
+    "description": "I'm Jitendra Suthar (goes by Jeet), a results-driven Full Stack Developer with 5+ years of experience designing and building scalable web applications. My expertise spans frontend architecture, backend systems, cloud infrastructure, and DevOps automation. I focus on writing maintainable code, optimizing performance, and building systems that scale reliably in production.",
     "highlights": [
       "Architected and deployed containerized applications on AWS ECS with Fargate",
       "Built Next.js platform serving 100K+ monthly users",

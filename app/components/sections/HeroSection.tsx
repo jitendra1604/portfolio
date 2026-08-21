@@ -124,6 +124,7 @@ useEffect(() => {
       className="hero-section relative min-h-[calc(100svh-4rem)] bg-black text-white overflow-hidden"
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.03),transparent_26%),radial-gradient(circle_at_76%_22%,rgba(255,255,255,0.06),transparent_24%),linear-gradient(135deg,#000000_0%,#040404_42%,#090909_72%,#0b0b0b_100%)] z-0" />
+      <div className="pointer-events-none absolute -left-24 top-0 z-0 h-[420px] w-[420px] rounded-full bg-accent/[0.07] blur-[120px]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_58%_42%,rgba(0,0,0,0)_0%,rgba(0,0,0,0.32)_42%,rgba(0,0,0,0.78)_100%)] z-0" />
       <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:120px_120px]" />
       <div className="absolute inset-y-0 right-0 z-0 w-[42%] bg-gradient-to-l from-black via-black/88 to-transparent" />
@@ -133,6 +134,7 @@ useEffect(() => {
           <div className="flex flex-col">
             <div className="hero-eyebrow mb-5 inline-flex w-fit items-center gap-3 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-caption backdrop-blur">
               <span className="h-2 w-2 rounded-full bg-accent" />
+              <span className="sr-only">Jitendra Suthar — </span>
               Senior Full Stack Developer
             </div>
 

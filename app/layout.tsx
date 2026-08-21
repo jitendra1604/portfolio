@@ -1,5 +1,5 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import { Suspense } from "react";
 import Loader from "./components/Loader";
@@ -23,9 +23,9 @@ const spaceGrotesk = Space_Grotesk({
   display: "swap",
 });
 
-const title = "Jeet — Senior Full Stack Developer";
+const title = "Jeet (Jitendra Suthar) — Senior Full Stack Developer";
 const description =
-  "Portfolio of Jeet, a senior full stack developer building production-grade products with architecture depth — system design, AI-assisted delivery, and shipped outcomes.";
+  "Portfolio of Jitendra Suthar (Jeet), a senior full stack developer building production-grade products with architecture depth — system design, AI-assisted delivery, and shipped outcomes.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -35,20 +35,29 @@ export const metadata: Metadata = {
   },
   description,
   applicationName: "Jeet Portfolio",
-  authors: [{ name: "Jeet" }],
-  creator: "Jeet",
+  authors: [{ name: "Jitendra Suthar" }],
+  creator: "Jitendra Suthar",
   keywords: [
+    "Jeet",
+    "Jitendra Suthar",
     "Full Stack Developer",
-    "Software Engineer",
-    "Next.js",
-    "React",
+    "Senior Full Stack Developer",
+    "Next.js Developer",
+    "React Developer",
+    "Node.js Developer",
+    "AWS ECS Fargate",
     "System Design",
-    "Portfolio",
+    "Software Engineer Portfolio",
   ],
   icons: {
-    icon: "/jeet-logo.png",
-    shortcut: "/jeet-logo.png",
-    apple: "/jeet-logo.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
   alternates: {
     canonical: "/",
@@ -60,25 +69,22 @@ export const metadata: Metadata = {
     title,
     description,
     locale: "en_US",
-    images: [
-      {
-        url: "/profile.png",
-        width: 1200,
-        height: 630,
-        alt: "Jeet — Senior Full Stack Developer",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title,
     description,
-    images: ["/profile.png"],
   },
   robots: {
     index: true,
     follow: true,
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0a0a0a",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -88,8 +94,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <JsonLd data={{
           "@context": "https://schema.org",
           "@graph": [
-            { "@type": "Person", name: siteIdentity.name, jobTitle: siteIdentity.jobTitle, url: siteUrl, sameAs: [siteIdentity.linkedin, siteIdentity.github] },
-            { "@type": "WebSite", name: "Jeet Portfolio", url: siteUrl, author: { "@type": "Person", name: siteIdentity.name } },
+            { "@type": "Person", name: siteIdentity.fullName, alternateName: siteIdentity.name, jobTitle: siteIdentity.jobTitle, url: siteUrl, sameAs: [siteIdentity.linkedin, siteIdentity.github] },
+            { "@type": "WebSite", name: "Jeet Portfolio", url: siteUrl, author: { "@type": "Person", name: siteIdentity.fullName, alternateName: siteIdentity.name } },
           ],
         }} />
         <a

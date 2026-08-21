@@ -26,6 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: post.title,
     description: post.description,
+    keywords: post.tags,
     alternates: { canonical: `/blog/${post.slug}` },
     openGraph: {
       type: "article",
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: post.title,
       description: post.description,
       publishedTime: post.date,
-      tags: [post.tag],
+      tags: post.tags,
     },
     twitter: {
       card: "summary_large_image",
@@ -61,10 +62,20 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const url = `${siteUrl}/blog/${post.slug}`;
   return (
     <article className="bg-background px-6 py-28 text-ink md:py-36">
-      <JsonLd data={{ "@context": "https://schema.org", "@type": "BlogPosting", headline: post.title, description: post.description, datePublished: post.date, mainEntityOfPage: url, author: { "@type": "Person", name: siteIdentity.name }, publisher: { "@type": "Person", name: siteIdentity.name } }} />
+      <JsonLd data={{
+        "@context": "https://schema.org",
+        "@graph": [
+          { "@type": "BlogPosting", headline: post.title, description: post.description, datePublished: post.date, mainEntityOfPage: url, author: { "@type": "Person", name: siteIdentity.fullName, alternateName: siteIdentity.name }, publisher: { "@type": "Person", name: siteIdentity.fullName, alternateName: siteIdentity.name } },
+          { "@type": "BreadcrumbList", itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
+            { "@type": "ListItem", position: 2, name: "Blog", item: `${siteUrl}/blog` },
+            { "@type": "ListItem", position: 3, name: post.title, item: url },
+          ] },
+        ],
+      }} />
       <div className="prose-portfolio mx-auto max-w-3xl">
         <Link href="/blog" className="text-sm text-caption hover:text-accent">← Back to blog</Link>
-        <p className="mt-6 text-xs uppercase tracking-[0.2em] text-caption">{post.tag} · {post.date} · {post.readingTime} min read</p>
+        <p className="mt-6 text-xs uppercase tracking-[0.2em] text-caption">{post.tags.join(", ")} · {post.date} · {post.readingTime} min read</p>
         <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-6xl">{post.title}</h1>
         <p className="mt-5 text-xl text-body">{post.description}</p>
         <div className="mt-6">
