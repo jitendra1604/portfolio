@@ -10,7 +10,7 @@ export type BlogPost = {
   slug: string;
   title: string;
   date: string;
-  tag: string;
+  tags: string[];
   description: string;
   content: string;
   readingTime: number;
@@ -38,6 +38,14 @@ function slugify(input: string) {
 // no setup required. New files show up after the next deploy.
 // ---------------------------------------------------------------------------
 
+// Accepts either `tags: [Foo, Bar]` or the legacy singular `tag: Foo` in frontmatter.
+function parseFrontmatterTags(data: Record<string, unknown>): string[] {
+  if (Array.isArray(data.tags)) return data.tags.map(String).filter(Boolean);
+  if (typeof data.tags === "string") return data.tags.split(",").map((t) => t.trim()).filter(Boolean);
+  if (data.tag) return [String(data.tag)];
+  return [];
+}
+
 function parseLocalPost(fileName: string): BlogPost {
   const slug = fileName.replace(/\.mdx?$/, "");
   const source = fs.readFileSync(path.join(postsDirectory, fileName), "utf8");
@@ -46,7 +54,7 @@ function parseLocalPost(fileName: string): BlogPost {
     slug,
     title: String(data.title),
     date: String(data.date),
-    tag: String(data.tag),
+    tags: parseFrontmatterTags(data),
     description: String(data.description),
     content,
     readingTime: getReadingTime(content),
@@ -68,7 +76,7 @@ function getLocalPosts(): BlogPost[] {
 // NOTION_DATABASE_ID; silently disabled when unset.
 //
 // Expected database properties: Title (title), Slug (rich text), Description
-// (rich text), Tag (select or rich text), Date (date), Published (checkbox).
+// (rich text), Tag (multi_select, select, or rich text), Date (date), Published (checkbox).
 // ---------------------------------------------------------------------------
 
 async function getNotionClient() {
@@ -95,9 +103,18 @@ type NotionMeta = {
   slug: string;
   title: string;
   date: string;
-  tag: string;
+  tags: string[];
   description: string;
 };
+
+// The Tag property may be configured as multi_select, select, or rich_text —
+// support all three rather than assuming one shape.
+function extractTags(prop: any): string[] {
+  if (Array.isArray(prop?.multi_select)) return prop.multi_select.map((t: any) => t.name).filter(Boolean);
+  if (prop?.select?.name) return [prop.select.name];
+  const text = extractText(prop);
+  return text ? text.split(",").map((t: string) => t.trim()).filter(Boolean) : [];
+}
 
 function mapNotionPage(page: any): NotionMeta {
   const props = page.properties ?? {};
@@ -107,7 +124,7 @@ function mapNotionPage(page: any): NotionMeta {
     slug: extractText(props.Slug) || slugify(title),
     title,
     date: props.Date?.date?.start ?? "",
-    tag: props.Tag?.select?.name ?? extractText(props.Tag),
+    tags: extractTags(props.Tag),
     description: extractText(props.Description),
   };
 }
@@ -127,7 +144,7 @@ async function hydrateNotionPost(meta: NotionMeta): Promise<BlogPost> {
     slug: meta.slug,
     title: meta.title,
     date: meta.date,
-    tag: meta.tag,
+    tags: meta.tags,
     description: meta.description,
     content,
     readingTime: getReadingTime(content),
@@ -205,7 +222,7 @@ async function fetchExternalPosts(): Promise<BlogPost[]> {
         slug: slugify(`${platform}-${item.title ?? item.guid ?? item.link ?? ""}`),
         title: item.title ?? "Untitled",
         date: item.isoDate ?? item.pubDate ?? "",
-        tag: platform,
+        tags: [platform],
         description: (item.contentSnippet ?? "").slice(0, 220),
         content: "",
         readingTime: getReadingTime(item.contentSnippet ?? item.title ?? ""),
