@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { usePathname } from "next/navigation";
 import gsap from "gsap";
 import { useGsap } from "@/hooks/useGsap";
 import { useAblyChatRoom } from "@/hooks/useAblyChatRoom";
@@ -11,6 +12,9 @@ const ROOM_STORAGE_KEY = "chat-live-room-id";
 const NAME_STORAGE_KEY = "chat-live-visitor-name";
 
 export default function ChatLiveLauncher() {
+  const pathname = usePathname();
+  const isAdminRoute = pathname?.startsWith("/chat-live/admin") ?? false;
+
   const [open, setOpen] = useState(false);
   const [roomId, setRoomId] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -60,6 +64,15 @@ export default function ChatLiveLauncher() {
       { y: 18, opacity: 0, scale: 0.98 },
       { y: 0, opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" }
     );
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
   useEffect(() => {
@@ -157,57 +170,130 @@ export default function ChatLiveLauncher() {
   const inputDisabled = status !== "active" && status !== "waiting";
   const needsName = !roomId && !creating;
 
+  const dotColor =
+    status === "active"
+      ? "bg-accent"
+      : status === "error" || (status === "connecting" && connectionError)
+        ? "bg-rose-400"
+        : status === "closed"
+          ? "bg-muted"
+          : "bg-amber-400";
+
+  if (isAdminRoute) return null;
+
+  if (!open) {
+    return (
+      <div ref={scope} className="fixed bottom-5 right-5 z-[70]">
+        <div className="group/launcher relative">
+          <span
+            role="tooltip"
+            className="pointer-events-none absolute right-full top-1/2 mr-3 -translate-y-1/2 whitespace-nowrap rounded-full border border-line bg-[#141414] px-3 py-1.5 text-xs font-medium text-ink opacity-0 shadow-lg transition-opacity duration-200 group-hover/launcher:opacity-100"
+          >
+            Chat with me
+          </span>
+
+          {unreadCount === 0 ? (
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 -z-10 animate-ping rounded-full bg-accent/25"
+              style={{ animationIterationCount: 2, animationDuration: "1.6s" }}
+            />
+          ) : null}
+
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-label="Chat with me"
+            className="relative flex h-14 w-14 items-center justify-center rounded-full bg-ink text-background shadow-[0_10px_30px_rgba(0,0,0,0.35)] transition-transform hover:-translate-y-0.5 hover:bg-white"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-6 w-6">
+              <path
+                d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8A2.5 2.5 0 0 1 17.5 16H9l-4.5 4v-4h-0A2.5 2.5 0 0 1 4 13.5v-8Z"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinejoin="round"
+              />
+            </svg>
+
+            {unreadCount > 0 ? (
+              <span
+                aria-hidden="true"
+                className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-xs font-semibold text-background ring-2 ring-background"
+              >
+                {unreadCount}
+              </span>
+            ) : null}
+          </button>
+        </div>
+
+        <span className="sr-only" aria-live="polite">
+          {unreadCount > 0 ? `${unreadCount} new message${unreadCount === 1 ? "" : "s"} from Jeet` : ""}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div ref={scope} className="fixed bottom-5 right-5 z-[70] flex max-w-[calc(100vw-2rem)] flex-col items-end gap-3">
-      {open ? (
-        <div
-          ref={panelRef}
-          className="w-[min(380px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-[#0f0f0f]/95 text-ink shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl"
-        >
-          <div className="border-b border-line px-5 py-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.28em] text-caption">Live Chat</p>
-                <h3 className="mt-1 text-lg font-semibold">Chat with Jeet</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="rounded-full border border-line px-3 py-1 text-sm text-caption transition-colors hover:border-line-strong hover:text-ink"
-              >
-                Close
-              </button>
-            </div>
+    <div ref={scope} className="fixed bottom-5 right-5 z-[70] flex max-w-[calc(100vw-2rem)] flex-col items-end">
+      <div
+        ref={panelRef}
+        className={`flex w-[min(400px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border bg-[#0f0f0f]/95 text-ink shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl transition-[height,border-color] duration-300 ${
+          status === "active" ? "border-accent/30" : "border-line"
+        } ${needsName ? "h-auto" : "h-[min(560px,calc(100vh-6rem))]"}`}
+      >
+        <div className="flex items-center gap-3 border-b border-line px-5 py-4">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/15 font-display text-sm font-semibold text-accent">
+            J
+            <span
+              className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[#0f0f0f] ${dotColor}`}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-base font-semibold leading-tight">Chat with Jeet</h3>
             {!needsName ? (
-              <p
-                role="status"
-                aria-live="polite"
-                className={`mt-3 text-xs ${status === "active" ? "text-accent" : "text-caption"}`}
-              >
+              <p role="status" aria-live="polite" className="mt-0.5 truncate text-xs text-caption">
                 {statusLabel}
               </p>
-            ) : null}
+            ) : (
+              <p className="mt-0.5 text-xs text-caption">Usually replies within a few minutes</p>
+            )}
           </div>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Close chat"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-caption transition-colors hover:bg-white/[0.06] hover:text-ink"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-4 w-4">
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
 
+        <div className="flex flex-1 flex-col overflow-hidden">
           {needsName ? (
-            <form className="space-y-4 px-5 py-5" onSubmit={onSubmitName}>
-              <p className="text-sm text-caption">
-                What&apos;s your name? Jeet will see it when he joins.
+            <form className="space-y-4 px-5 py-6" onSubmit={onSubmitName}>
+              <p className="text-sm leading-relaxed text-body">
+                Say hello 👋 — what should Jeet call you?
               </p>
               <input
                 value={nameInput}
                 onChange={(event) => setNameInput(event.target.value)}
                 placeholder="Your name"
                 autoFocus
-                className="w-full border-b border-line-strong bg-transparent pb-2 text-ink placeholder:text-caption focus:border-accent focus:outline-none"
+                className="w-full rounded-full border border-line bg-white/[0.03] px-4 py-3 text-sm text-ink placeholder:text-caption transition-colors focus:border-accent focus:outline-none"
               />
               {createError ? (
                 <p role="alert" className="text-sm text-rose-300">
                   {createError}
                 </p>
               ) : null}
-              <button type="submit" disabled={!nameInput.trim()} className="btn btn-primary disabled:cursor-not-allowed disabled:opacity-60">
-                Start chat
+              <button
+                type="submit"
+                disabled={!nameInput.trim() || creating}
+                className="btn btn-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {creating ? "Starting…" : "Start chat"}
               </button>
             </form>
           ) : createError ? (
@@ -216,7 +302,7 @@ export default function ChatLiveLauncher() {
             </p>
           ) : (
             <>
-              <div ref={messagesRef} className="max-h-[320px] space-y-3 overflow-y-auto px-5 py-4">
+              <div ref={messagesRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
                 {messages.length === 0 ? (
                   <p className="text-sm text-caption">
                     Say hello — Jeet gets notified the moment you start this chat.
@@ -257,22 +343,7 @@ export default function ChatLiveLauncher() {
             </>
           )}
         </div>
-      ) : null}
-
-      <button type="button" onClick={() => setOpen(true)} className="btn btn-primary relative shadow-lg">
-        Chat with me
-        {unreadCount > 0 ? (
-          <span
-            aria-hidden="true"
-            className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-xs font-semibold text-white"
-          >
-            {unreadCount}
-          </span>
-        ) : null}
-        <span className="sr-only" aria-live="polite">
-          {unreadCount > 0 ? `${unreadCount} new message${unreadCount === 1 ? "" : "s"} from Jeet` : ""}
-        </span>
-      </button>
+      </div>
     </div>
   );
 }
