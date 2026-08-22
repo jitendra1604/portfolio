@@ -25,7 +25,7 @@ const spaceGrotesk = Space_Grotesk({
 
 const title = "Jeet (Jitendra Suthar) — Senior Full Stack Developer";
 const description =
-  "Portfolio of Jitendra Suthar (Jeet), a senior full stack developer building production-grade products with architecture depth — system design, AI-assisted delivery, and shipped outcomes.";
+  "Portfolio of Jitendra Suthar (Jeet), senior full stack developer — production-grade systems, architecture, system design, and shipped outcomes.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -79,6 +79,9 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
 };
 
 export const viewport: Viewport = {
