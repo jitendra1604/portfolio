@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const CANONICAL_HOST = "jeetlabs.in";
-const REDIRECT_HOSTS = new Set(["my-portfolio.jeetlabs.in", "www.jeetlabs.in"]);
+// www <-> apex redirection is handled by Vercel's domain settings, not here —
+// duplicating it here caused a redirect loop against Vercel's own rule.
+const REDIRECT_HOSTS = new Set(["my-portfolio.jeetlabs.in"]);
 
 export function middleware(request: NextRequest) {
   const host = request.headers.get("host") ?? "";
