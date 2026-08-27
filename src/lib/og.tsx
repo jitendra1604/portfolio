@@ -80,12 +80,14 @@ export function OgBanner({
   tag,
   title,
   footer,
+  backgroundImage,
 }: {
   seed: number;
   eyebrow: string;
   tag: string;
   title: string;
   footer: string;
+  backgroundImage?: string;
 }): ReactElement {
   const shapes = generateShapes(seed);
 
@@ -103,6 +105,29 @@ export function OgBanner({
         position: "relative",
       }}
     >
+      {backgroundImage ? (
+        <img
+          src={backgroundImage}
+          alt=""
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            opacity: 0.42,
+          }}
+        />
+      ) : null}
+      {backgroundImage ? (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: "linear-gradient(90deg, rgba(10,10,10,0.98) 0%, rgba(10,10,10,0.78) 52%, rgba(10,10,10,0.42) 100%)",
+          }}
+        />
+      ) : null}
       {shapes.map((shape, i) => {
         const color = shape.tone === "accent" ? "52,211,153" : "245,245,245";
         if (shape.type === "line") {

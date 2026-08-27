@@ -23,6 +23,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
         tag={tag}
         title={title}
         footer={`${host}/blog`}
+        backgroundImage={post?.cover}
       />
     ),
     { ...size }

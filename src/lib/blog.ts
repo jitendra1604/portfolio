@@ -19,6 +19,8 @@ export type BlogPost = {
   url?: string;
   /** Only set for external posts — e.g. "Medium", "Dev.to". */
   platform?: string;
+  /** Notion page cover image, when one is configured. */
+  cover?: string;
 };
 
 function getReadingTime(content: string) {
@@ -105,7 +107,15 @@ type NotionMeta = {
   date: string;
   tags: string[];
   description: string;
+  cover?: string;
 };
+
+function extractNotionCover(page: any): string | undefined {
+  const cover = page.cover;
+  if (cover?.type === "external") return cover.external?.url;
+  if (cover?.type === "file") return cover.file?.url;
+  return undefined;
+}
 
 // The Tag property may be configured as multi_select, select, or rich_text —
 // support all three rather than assuming one shape.
@@ -126,6 +136,7 @@ function mapNotionPage(page: any): NotionMeta {
     date: props.Date?.date?.start ?? "",
     tags: extractTags(props.Tag),
     description: extractText(props.Description),
+    cover: extractNotionCover(page),
   };
 }
 
@@ -149,6 +160,7 @@ async function hydrateNotionPost(meta: NotionMeta): Promise<BlogPost> {
     content,
     readingTime: getReadingTime(content),
     source: "notion",
+    cover: meta.cover,
   };
 }
 

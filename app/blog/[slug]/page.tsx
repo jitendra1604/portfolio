@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import type { ImgHTMLAttributes } from "react";
 import Link from "next/link";
 import { compileMDX } from "next-mdx-remote/rsc";
 import JsonLd from "../../components/JsonLd";
@@ -11,6 +12,15 @@ import { siteIdentity, siteUrl } from "@/lib/site";
 // then get cached — see `revalidate` below.
 export const dynamicParams = true;
 export const revalidate = 30;
+
+/**
+ * Blog images come from Unsplash and Notion rather than the local asset
+ * folder. A no-referrer policy is important for Notion's signed image URLs,
+ * which can reject requests that include the site's origin as a referrer.
+ */
+function BlogImage({ alt = "", ...props }: ImgHTMLAttributes<HTMLImageElement>) {
+  return <img {...props} alt={alt} loading="lazy" decoding="async" referrerPolicy="no-referrer" />;
+}
 
 export async function generateStaticParams() {
   const posts = await getAllPosts();
@@ -52,7 +62,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   let renderedContent: React.ReactNode;
   try {
-    renderedContent = (await compileMDX({ source: post.content })).content;
+    renderedContent = (await compileMDX({ source: post.content, components: { img: BlogImage } })).content;
   } catch {
     // Notion markdown can occasionally include syntax MDX chokes on
     // (stray braces, raw HTML) — fall back to plain text rather than 500ing.
