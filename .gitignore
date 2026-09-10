@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local screenshot captures — large PNGs, not build inputs
+/screenshots
