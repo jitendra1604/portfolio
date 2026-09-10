@@ -21,6 +21,8 @@ export type BlogPost = {
   platform?: string;
   /** Notion page cover image, when one is configured. */
   cover?: string;
+  /** Last edit time, where the source reports one — used for dateModified. */
+  updated?: string;
 };
 
 function getReadingTime(content: string) {
@@ -108,6 +110,7 @@ type NotionMeta = {
   tags: string[];
   description: string;
   cover?: string;
+  updated?: string;
 };
 
 function extractNotionCover(page: any): string | undefined {
@@ -137,7 +140,72 @@ function mapNotionPage(page: any): NotionMeta {
     tags: extractTags(props.Tag),
     description: extractText(props.Description),
     cover: extractNotionCover(page),
+    updated: page.last_edited_time,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Notion's markdown needs three fixes before it renders correctly.
+// ---------------------------------------------------------------------------
+
+/**
+ * Notion pages repeat their title as the first heading, so the rendered post
+ * showed the headline twice — and shipped two <h1>s, which is a real SEO
+ * problem, not just a visual one.
+ */
+function stripDuplicateTitle(markdown: string, title: string): string {
+  const normalise = (value: string) =>
+    value.replace(/[#*_`]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+  const target = normalise(title);
+  const lines = markdown.split("\n");
+
+  let index = 0;
+  while (index < lines.length && lines[index].trim() === "") index += 1;
+  if (index < lines.length && normalise(lines[index]) === target) {
+    lines.splice(index, 1);
+    return lines.join("\n").trimStart();
+  }
+  return markdown;
+}
+
+/**
+ * Images uploaded through Notion can carry an absolute URL pointing at an old
+ * deploy of this site. Those are same-content assets living in /public, and
+ * the absolute form is blocked by our own CSP (img-src 'self'), so the post
+ * renders alt text instead of a diagram. Rewrite any self-referential
+ * absolute URL back to a root-relative path.
+ */
+function rewriteSelfHostedImages(markdown: string): string {
+  return markdown.replace(
+    /!\[([^\]]*)\]\((https?:\/\/[^)\s]+?)((?:\/blog\/|\/images\/)[^)\s]+)\)/g,
+    (_match, alt, _origin, filePath) => `![${alt}](${filePath})`
+  );
+}
+
+/**
+ * Alt text arrives as the raw filename ("n-plus-1-problem.svg"), which is
+ * what a screen reader announces and what search engines index. Turn it into
+ * words. Notion to_do blocks arrive as literal "[ ]" text because the MDX
+ * pipeline has no GFM task-list support, so give them real markers.
+ */
+function humaniseMarkdown(markdown: string): string {
+  return markdown
+    .replace(/!\[([^\]]*)\]/g, (match, alt: string) => {
+      if (!/\.(png|jpe?g|gif|svg|webp|avif)$/i.test(alt.trim())) return match;
+      const words = alt
+        .trim()
+        .replace(/\.[a-z0-9]+$/i, "")
+        .replace(/[-_]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      return `![${words.charAt(0).toUpperCase()}${words.slice(1)}]`;
+    })
+    .replace(/^(\s*)(?:-\s*)?\[\s\]\s+/gm, "$1- ☐ ")
+    .replace(/^(\s*)(?:-\s*)?\[[xX]\]\s+/gm, "$1- ☑ ");
+}
+
+function normaliseNotionMarkdown(markdown: string, title: string): string {
+  return humaniseMarkdown(rewriteSelfHostedImages(stripDuplicateTitle(markdown, title)));
 }
 
 async function fetchNotionPostContent(pageId: string): Promise<string> {
@@ -150,7 +218,8 @@ async function fetchNotionPostContent(pageId: string): Promise<string> {
 }
 
 async function hydrateNotionPost(meta: NotionMeta): Promise<BlogPost> {
-  const content = await fetchNotionPostContent(meta.pageId);
+  const raw = await fetchNotionPostContent(meta.pageId);
+  const content = normaliseNotionMarkdown(raw, meta.title);
   return {
     slug: meta.slug,
     title: meta.title,
@@ -161,6 +230,7 @@ async function hydrateNotionPost(meta: NotionMeta): Promise<BlogPost> {
     readingTime: getReadingTime(content),
     source: "notion",
     cover: meta.cover,
+    updated: meta.updated,
   };
 }
 

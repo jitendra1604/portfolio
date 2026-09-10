@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getAllPosts } from "@/lib/blog";
 import { siteUrl } from "@/lib/site";
+import { tagToSlug } from "./blog/tag/[tag]/page";
 
 function validDate(value: string): Date | undefined {
   if (!value) return undefined;
@@ -26,7 +27,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...posts
       .filter((post) => post.source !== "external")
       .map((post) => {
-        const lastModified = validDate(post.date);
+        // Prefer the source's last-edited time: an edited post should signal
+        // freshness, and post.date never changes after publication.
+        const lastModified = validDate(post.updated ?? "") ?? validDate(post.date);
         return {
           url: `${siteUrl}/blog/${post.slug}`,
           ...(lastModified ? { lastModified } : {}),
@@ -34,5 +37,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           priority: 0.7,
         };
       }),
+    ...Array.from(new Set(posts.flatMap((post) => post.tags).map(tagToSlug))).map((tag) => ({
+      url: `${siteUrl}/blog/tag/${tag}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.5,
+    })),
   ];
 }

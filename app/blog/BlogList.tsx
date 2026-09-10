@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { BlogPost } from "@/lib/blog";
+import PostCard from "./PostCard";
 
 type BlogListProps = {
   posts: BlogPost[];
@@ -85,7 +85,7 @@ export default function BlogList({ posts }: BlogListProps) {
             <div
               role="group"
               aria-label="Filter posts by tag"
-              className="absolute left-0 top-[calc(100%+8px)] z-20 w-64 max-h-72 overflow-y-auto rounded-2xl border border-line bg-[#121212] p-2 shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+              className="absolute left-0 top-[calc(100%+8px)] z-20 w-64 max-h-72 overflow-y-auto rounded-2xl border border-line bg-surface p-2 shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
             >
               {tags.map((tag) => {
                 const isSelected = selectedTags.includes(tag);
@@ -146,6 +146,14 @@ export default function BlogList({ posts }: BlogListProps) {
             Clear
           </button>
         ) : null}
+
+        {/* Filtering used to change the list with no acknowledgement that it
+            had. The count says what happened. */}
+        <span className="ml-auto text-xs uppercase tracking-[0.15em] text-caption tabular-nums">
+          {selectedTags.length > 0
+            ? `${visiblePosts.length} of ${posts.length} posts`
+            : `${posts.length} posts`}
+        </span>
       </div>
       <div className="mt-8">
         <PostList posts={visiblePosts} />
@@ -160,40 +168,10 @@ function PostList({ posts }: { posts: BlogPost[] }) {
   }
 
   return (
-    <div className="grid gap-5">
-      {posts.map((post) => {
-        const isExternal = post.source === "external";
-        const href = isExternal ? post.url ?? "#" : `/blog/${post.slug}`;
-        return (
-          <article key={`${post.source}-${post.slug}`} className="card">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-              <div className="flex flex-wrap gap-1.5">
-                {post.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full border border-line px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-caption"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <span className="text-xs uppercase tracking-[0.2em] text-muted">
-                {post.date} · {post.readingTime} min read
-              </span>
-            </div>
-            <h2 className="mt-3 text-2xl font-semibold">
-              {isExternal ? (
-                <a href={href} target="_blank" rel="noopener noreferrer" className="hover:text-accent">
-                  {post.title} <span className="text-base text-caption">↗ on {post.platform}</span>
-                </a>
-              ) : (
-                <Link href={href} className="hover:text-accent">{post.title}</Link>
-              )}
-            </h2>
-            <p className="mt-3 text-body">{post.description}</p>
-          </article>
-        );
-      })}
+    <div className="grid gap-5 md:grid-cols-2">
+      {posts.map((post, index) => (
+        <PostCard key={`${post.source}-${post.slug}`} post={post} isLead={index === 0} />
+      ))}
     </div>
   );
 }

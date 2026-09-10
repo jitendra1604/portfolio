@@ -1,12 +1,17 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import type { ImgHTMLAttributes } from "react";
+import type { ImgHTMLAttributes, ReactNode } from "react";
 import Link from "next/link";
 import { compileMDX } from "next-mdx-remote/rsc";
+import rehypePrettyCode from "rehype-pretty-code";
 import JsonLd from "../../components/JsonLd";
 import ShareButtons from "../../components/ShareButtons";
-import { getAllPosts, getPostBySlug } from "@/lib/blog";
+import ReadingProgress from "../../components/blog/ReadingProgress";
+import CodeBlock from "../../components/blog/CodeBlock";
+import TableOfContents, { type TocEntry } from "../../components/blog/TableOfContents";
+import { getAllPosts, getPostBySlug, type BlogPost } from "@/lib/blog";
 import { siteIdentity, siteUrl } from "@/lib/site";
+import { tagToSlug } from "../tag/[tag]/page";
 
 // New slugs (e.g. a fresh Notion post) render on demand instead of 404ing,
 // then get cached — see `revalidate` below.
@@ -22,6 +27,85 @@ function BlogImage({ alt = "", ...props }: ImgHTMLAttributes<HTMLImageElement>) 
   return <img {...props} alt={alt} loading="lazy" decoding="async" referrerPolicy="no-referrer" />;
 }
 
+function slugifyHeading(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function headingText(children: ReactNode): string {
+  if (typeof children === "string") return children;
+  if (typeof children === "number") return String(children);
+  if (Array.isArray(children)) return children.map(headingText).join("");
+  if (children && typeof children === "object" && "props" in children) {
+    return headingText((children as { props: { children?: ReactNode } }).props.children);
+  }
+  return "";
+}
+
+/**
+ * Headings carry ids so the table of contents, deep links and Google's
+ * "jump to section" links all have something to anchor to.
+ */
+const mdxComponents = {
+  img: BlogImage,
+  pre: CodeBlock,
+  h2: ({ children }: { children?: ReactNode }) => (
+    <h2 id={slugifyHeading(headingText(children))} className="scroll-mt-28">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }: { children?: ReactNode }) => (
+    <h3 id={slugifyHeading(headingText(children))} className="scroll-mt-28">
+      {children}
+    </h3>
+  ),
+};
+
+/** Table of contents is read off the markdown, before MDX compiles it. */
+function extractToc(markdown: string): TocEntry[] {
+  const entries: TocEntry[] = [];
+  let insideFence = false;
+
+  for (const line of markdown.split("\n")) {
+    if (line.trim().startsWith("```")) {
+      insideFence = !insideFence;
+      continue;
+    }
+    if (insideFence) continue;
+
+    const match = /^(#{2,3})\s+(.+?)\s*$/.exec(line);
+    if (!match) continue;
+    const text = match[2].replace(/[*_`]/g, "").trim();
+    const id = slugifyHeading(text);
+    if (id) entries.push({ id, text, level: match[1].length === 2 ? 2 : 3 });
+  }
+  return entries;
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+}
+
+/** Most-tags-in-common first, so "related" means related. */
+function findRelated(post: BlogPost, posts: BlogPost[]): BlogPost[] {
+  return posts
+    .filter((other) => other.slug !== post.slug && other.source !== "external")
+    .map((other) => ({
+      post: other,
+      shared: other.tags.filter((tag) => post.tags.includes(tag)).length,
+    }))
+    .filter((entry) => entry.shared > 0)
+    .sort((a, b) => b.shared - a.shared || b.post.date.localeCompare(a.post.date))
+    .slice(0, 2)
+    .map((entry) => entry.post);
+}
+
 export async function generateStaticParams() {
   const posts = await getAllPosts();
   return posts.filter((post) => post.source !== "external").map(({ slug }) => ({ slug }));
@@ -33,10 +117,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!post) return { title: "Post not found" };
 
   const url = `${siteUrl}/blog/${post.slug}`;
+  // A post with its own cover outranks the generated card in a link preview.
+  const image = post.cover ?? `${siteUrl}/opengraph-image`;
+
   return {
     title: post.title,
     description: post.description,
     keywords: post.tags,
+    authors: [{ name: siteIdentity.fullName, url: siteUrl }],
     alternates: { canonical: `/blog/${post.slug}` },
     openGraph: {
       type: "article",
@@ -45,12 +133,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: post.title,
       description: post.description,
       publishedTime: post.date,
+      modifiedTime: post.updated ?? post.date,
+      authors: [siteIdentity.fullName],
       tags: post.tags,
+      images: [{ url: image, alt: post.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description: post.description,
+      images: [image],
+      creator: "@jeet",
     },
   };
 }
@@ -60,9 +153,36 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
+  const posts = await getAllPosts();
+  const internalPosts = posts.filter((entry) => entry.source !== "external");
+  const currentIndex = internalPosts.findIndex((entry) => entry.slug === post.slug);
+  const newer = currentIndex > 0 ? internalPosts[currentIndex - 1] : undefined;
+  const older = currentIndex >= 0 ? internalPosts[currentIndex + 1] : undefined;
+  const related = findRelated(post, internalPosts);
+  const toc = extractToc(post.content);
+
   let renderedContent: React.ReactNode;
   try {
-    renderedContent = (await compileMDX({ source: post.content, components: { img: BlogImage } })).content;
+    renderedContent = (
+      await compileMDX({
+        source: post.content,
+        components: mdxComponents,
+        options: {
+          mdxOptions: {
+            rehypePlugins: [
+              [
+                rehypePrettyCode,
+                {
+                  theme: "github-dark-default",
+                  keepBackground: false,
+                  defaultLang: "text",
+                },
+              ],
+            ],
+          },
+        },
+      })
+    ).content;
   } catch {
     // Notion markdown can occasionally include syntax MDX chokes on
     // (stray braces, raw HTML) — fall back to plain text rather than 500ing.
@@ -70,12 +190,44 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   }
 
   const url = `${siteUrl}/blog/${post.slug}`;
+  const image = post.cover ?? `${siteUrl}/opengraph-image`;
+  const wordCount = post.content.trim().split(/\s+/).length;
+
   return (
-    <article className="bg-background px-6 py-28 text-ink md:py-36">
+    <article id="top" className="bg-background px-6 pb-24 pt-10 text-ink md:pb-32 md:pt-14">
+      <ReadingProgress />
       <JsonLd data={{
         "@context": "https://schema.org",
         "@graph": [
-          { "@type": "BlogPosting", headline: post.title, description: post.description, datePublished: post.date, mainEntityOfPage: url, author: { "@type": "Person", name: siteIdentity.fullName, alternateName: siteIdentity.name }, publisher: { "@type": "Person", name: siteIdentity.fullName, alternateName: siteIdentity.name } },
+          {
+            "@type": "BlogPosting",
+            headline: post.title,
+            description: post.description,
+            datePublished: post.date,
+            dateModified: post.updated ?? post.date,
+            mainEntityOfPage: { "@type": "WebPage", "@id": url },
+            url,
+            image,
+            keywords: post.tags.join(", "),
+            articleSection: post.tags[0],
+            wordCount,
+            timeRequired: `PT${post.readingTime}M`,
+            inLanguage: "en",
+            author: {
+              "@type": "Person",
+              name: siteIdentity.fullName,
+              alternateName: siteIdentity.name,
+              jobTitle: siteIdentity.jobTitle,
+              url: siteUrl,
+              sameAs: [siteIdentity.github, siteIdentity.linkedin].filter(Boolean),
+            },
+            publisher: {
+              "@type": "Person",
+              name: siteIdentity.fullName,
+              alternateName: siteIdentity.name,
+              url: siteUrl,
+            },
+          },
           { "@type": "BreadcrumbList", itemListElement: [
             { "@type": "ListItem", position: 1, name: "Home", item: siteUrl },
             { "@type": "ListItem", position: 2, name: "Blog", item: `${siteUrl}/blog` },
@@ -83,15 +235,120 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           ] },
         ],
       }} />
-      <div className="prose-portfolio mx-auto max-w-3xl">
-        <Link href="/blog" className="text-sm text-caption hover:text-accent">← Back to blog</Link>
-        <p className="mt-6 text-xs uppercase tracking-[0.2em] text-caption">{post.tags.join(", ")} · {post.date} · {post.readingTime} min read</p>
-        <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-6xl">{post.title}</h1>
-        <p className="mt-5 text-xl text-body">{post.description}</p>
-        <div className="mt-6">
-          <ShareButtons url={url} title={post.title} />
+
+      {/* The prose column keeps its reading measure at every width — letting
+          it fill the grid stretched lines to ~110 characters and left the rail
+          stranded against the right edge. The rail sits beside it, and the
+          pair is centred as one block. */}
+      <div className="mx-auto flex max-w-3xl flex-col gap-12 xl:max-w-[1160px] xl:flex-row xl:gap-14">
+        <div className="prose-portfolio w-full min-w-0 xl:max-w-3xl">
+          <Link href="/blog" className="text-sm text-caption hover:text-accent">← Back to blog</Link>
+
+          <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2">
+            {post.tags.slice(0, 3).map((tag) => (
+              <Link
+                key={tag}
+                href={`/blog/tag/${tagToSlug(tag)}`}
+                className="chip transition-colors hover:border-line-strong hover:text-ink"
+              >
+                {tag}
+              </Link>
+            ))}
+            {post.tags.length > 3 ? (
+              <span className="chip" title={post.tags.slice(3).join(", ")}>
+                +{post.tags.length - 3}
+              </span>
+            ) : null}
+          </div>
+
+          <h1 className="mt-5 text-4xl font-bold tracking-tight md:text-6xl">{post.title}</h1>
+          <p className="mt-5 text-xl text-body">{post.description}</p>
+
+          <p className="mt-5 text-sm text-caption">
+            By {siteIdentity.fullName} ·{" "}
+            <time dateTime={post.date}>{formatDate(post.date)}</time> · {post.readingTime} min read
+          </p>
+
+          <div className="mt-6">
+            <ShareButtons url={url} title={post.title} />
+          </div>
+
+          {post.cover ? (
+            <img
+              src={post.cover}
+              alt={post.title}
+              className="mt-10 w-full rounded-xl border border-line"
+              referrerPolicy="no-referrer"
+            />
+          ) : null}
+
+          <div className="mt-12 text-body">{renderedContent}</div>
+
+          {post.updated && post.updated.slice(0, 10) !== post.date.slice(0, 10) ? (
+            <p className="mt-12 text-sm text-caption">
+              Last updated <time dateTime={post.updated}>{formatDate(post.updated)}</time>
+            </p>
+          ) : null}
+
+          {/* Author block — a named, credentialed author is what E-E-A-T asks
+              for, and it gives the post somewhere to send readers next. */}
+          <aside className="mt-12 rounded-xl border border-line bg-surface p-6">
+            <p className="text-xs uppercase tracking-[0.2em] text-caption">Written by</p>
+            <p className="mt-2 text-lg font-semibold text-ink">{siteIdentity.fullName}</p>
+            <p className="mt-2 text-sm text-body">
+              {siteIdentity.jobTitle} — React, Next.js, Node.js, AWS.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-4 text-sm">
+              <Link href="/#contact" className="text-accent hover:text-ink">Get in touch</Link>
+              <a href={siteIdentity.github} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-ink">GitHub</a>
+              <a href={siteIdentity.linkedin} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-ink">LinkedIn</a>
+            </div>
+          </aside>
+
+          {related.length > 0 ? (
+            <section className="mt-12">
+              <h2 className="text-xs uppercase tracking-[0.2em] text-caption">Related reading</h2>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {related.map((entry) => (
+                  <Link
+                    key={entry.slug}
+                    href={`/blog/${entry.slug}`}
+                    className="rounded-xl border border-line bg-surface p-5 transition-colors hover:border-line-strong hover:bg-surface-hover"
+                  >
+                    <span className="text-xs uppercase tracking-[0.15em] text-caption tabular-nums">
+                      {entry.readingTime} min read
+                    </span>
+                    <span className="mt-2 block font-semibold text-ink">{entry.title}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {newer || older ? (
+            <nav className="mt-12 flex flex-col gap-4 border-t border-line pt-8 sm:flex-row sm:justify-between">
+              {older ? (
+                <Link href={`/blog/${older.slug}`} className="group max-w-xs">
+                  <span className="text-xs uppercase tracking-[0.2em] text-caption">← Older</span>
+                  <span className="mt-1 block text-ink group-hover:text-accent">{older.title}</span>
+                </Link>
+              ) : <span />}
+              {newer ? (
+                <Link href={`/blog/${newer.slug}`} className="group max-w-xs sm:text-right">
+                  <span className="text-xs uppercase tracking-[0.2em] text-caption">Newer →</span>
+                  <span className="mt-1 block text-ink group-hover:text-accent">{newer.title}</span>
+                </Link>
+              ) : null}
+            </nav>
+          ) : null}
         </div>
-        <div className="mt-12 text-body">{renderedContent}</div>
+
+        {/* The aside must stretch to the article's full height — with
+            items-start it collapsed to its own content, leaving the sticky nav
+            no range to travel, so it scrolled away like a normal block. */}
+        <aside className="hidden xl:block xl:w-[280px] xl:shrink-0 xl:pt-14">
+          <TableOfContents entries={toc} />
+        </aside>
       </div>
     </article>
   );

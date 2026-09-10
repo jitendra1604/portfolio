@@ -6,6 +6,7 @@ export const siteIdentity = {
   fullName: "Jitendra Suthar",
   jobTitle: "Senior Full Stack Developer",
   githubUsername: "jitendra1604",
+  email: portfolioData.contact.email,
   linkedin: portfolioData.contact.linkedin,
   github: portfolioData.contact.github,
 };

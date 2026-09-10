@@ -195,12 +195,15 @@ export default function Header() {
         <nav className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
          <div className="nav-logo" data-magnetic>
           <Link href="/#home" aria-label="Go to home">
+            {/* Horizontal lockup: the supplied artwork is stacked, which would
+                shrink the wordmark to noise inside a 64px bar. h-7 on phones,
+                h-9 from sm up — the aspect ratio keeps the width in step. */}
             <Image
-              src="/jeet-logo-nav.png"
-              alt="Jeet.dev Logo"
-              width={508}
-              height={260}
-              className="h-10 w-auto"
+              src="/brand/jeetlabs-lockup-dark.svg"
+              alt="JeetLabs"
+              width={481}
+              height={100}
+              className="h-7 w-auto sm:h-9"
               priority
             />
           </Link>
@@ -249,7 +252,7 @@ export default function Header() {
       <div
         id="mobile-navigation"
         ref={mobileMenuRef}
-        className={`fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 overflow-y-auto bg-black py-20 text-white md:hidden ${
+        className={`fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 overflow-y-auto bg-background py-20 text-ink md:hidden ${
           menuOpen ? "pointer-events-auto" : "pointer-events-none"
         }`}
         aria-hidden={!menuOpen}

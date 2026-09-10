@@ -39,12 +39,17 @@ export default function RefinedAgencyCursor() {
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
-    gsap.set([dot, ring], { xPercent: -50, yPercent: -50, opacity: 0 });
+    // Park both layers off-screen, not at the implicit 0,0: until the pointer
+    // reports a position, anything made visible would sit in the top-left
+    // corner. The dot is driven by quickTo, which does not run until the first
+    // mousemove, so it would stay there.
+    gsap.set([dot, ring], { xPercent: -50, yPercent: -50, opacity: 0, x: -9999, y: -9999 });
 
-    const mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const mouse = { x: -9999, y: -9999 };
     const ringPos = { x: mouse.x, y: mouse.y };
     let state = "";
     let visible = false;
+    let hasPosition = false;
     let dotRest = 1;
     let hoverEl: HTMLElement | null = null;
     let magneticEl: HTMLElement | null = null;
@@ -113,8 +118,22 @@ export default function RefinedAgencyCursor() {
     };
 
     // --- Visibility ---------------------------------------------------------
+    // Snap both layers to a known pointer position without tweening, so the
+    // cursor never sweeps in from wherever it was parked.
+    const placeAt = (x: number, y: number) => {
+      mouse.x = x;
+      mouse.y = y;
+      ringPos.x = x;
+      ringPos.y = y;
+      gsap.set([dot, ring], { x, y });
+      hasPosition = true;
+    };
+
     const show = () => {
-      if (visible) return;
+      // A page can load with the pointer already inside it, which fires
+      // mouseenter before any movement. Staying hidden until the position is
+      // known is what keeps the cursor out of the corner.
+      if (visible || !hasPosition) return;
       visible = true;
       if (state !== "text") gsap.to([dot, ring], { opacity: 1, duration: 0.3 });
     };
@@ -130,6 +149,7 @@ export default function RefinedAgencyCursor() {
 
     // --- Pointer movement ---------------------------------------------------
     const onMove = (e: MouseEvent) => {
+      if (!hasPosition) placeAt(e.clientX, e.clientY);
       mouse.x = e.clientX;
       mouse.y = e.clientY;
       dotX(e.clientX);
@@ -180,13 +200,32 @@ export default function RefinedAgencyCursor() {
 
     // --- Ticker: follow + (default-only) squash & stretch -------------------
     const tick = () => {
+      if (!hasPosition) return;
       let tx = mouse.x;
       let ty = mouse.y;
       const locked = state === "interactive" && hoverEl;
       if (locked) {
         const rect = hoverEl!.getBoundingClientRect();
-        tx = rect.left + rect.width / 2;
-        ty = rect.top + rect.height / 2;
+        // The wrap state is anchored to an element, and nothing but a
+        // mousemove used to leave it. A client-side navigation removes that
+        // element while the pointer sits still, so the ring kept tracking a
+        // detached rect — which resolves to 0,0 — and parked itself in the
+        // corner, still green and still element-sized. Scrolling the target
+        // out from under a stationary pointer stranded it the same way.
+        const detached =
+          !hoverEl!.isConnected || (rect.width === 0 && rect.height === 0);
+        const pointerLeft =
+          mouse.x < rect.left ||
+          mouse.x > rect.right ||
+          mouse.y < rect.top ||
+          mouse.y > rect.bottom;
+
+        if (detached || pointerLeft) {
+          toDefault();
+        } else {
+          tx = rect.left + rect.width / 2;
+          ty = rect.top + rect.height / 2;
+        }
       }
 
       ringPos.x += (tx - ringPos.x) * (reduceMotion ? 1 : 0.22);
@@ -216,8 +255,15 @@ export default function RefinedAgencyCursor() {
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mousedown", onDown);
     window.addEventListener("mouseup", onUp);
+    // mouseenter carries coordinates, so the cursor can appear in the right
+    // place on entry instead of waiting for the first movement.
+    const onEnter = (e: MouseEvent) => {
+      placeAt(e.clientX, e.clientY);
+      show();
+    };
+
     document.addEventListener("mouseleave", hide);
-    document.addEventListener("mouseenter", show);
+    document.addEventListener("mouseenter", onEnter);
 
     toDefault();
 
@@ -232,7 +278,7 @@ export default function RefinedAgencyCursor() {
       window.removeEventListener("mousedown", onDown);
       window.removeEventListener("mouseup", onUp);
       document.removeEventListener("mouseleave", hide);
-      document.removeEventListener("mouseenter", show);
+      document.removeEventListener("mouseenter", onEnter);
       document.documentElement.classList.remove("custom-cursor-active");
       if (magneticEl) resetMagnetic(magneticEl);
     };

@@ -24,7 +24,9 @@
     "notion-to-md": "^3.1.9",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "rss-parser": "^3.13.0"
+    "rehype-pretty-code": "^0.14.5",
+    "rss-parser": "^3.13.0",
+    "shiki": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

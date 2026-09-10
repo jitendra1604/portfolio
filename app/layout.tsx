@@ -2,13 +2,17 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import { Suspense } from "react";
-import Loader from "./components/Loader";
+import PageLoader from "./components/PageLoader";
+import RouteProgress from "./components/RouteProgress";
+import FirstVisitLoader, {
+  FIRST_VISIT_LOADER_SCRIPT,
+} from "./components/FirstVisitLoader";
 import Header from "./components/Header";
+import Footer from "./components/Footer";
 import RefinedAgencyCursor from "./components/AgencyCursor";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import JsonLd from "./components/JsonLd";
-import ChatLiveLauncher from "./components/chat-live/ChatLiveLauncher";
 import { siteIdentity, siteUrl } from "@/lib/site";
 
 const inter = Inter({
@@ -52,8 +56,10 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
+      { url: "/brand/jeetlabs-icon.svg", type: "image/svg+xml" },
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
       { url: "/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
     ],
     shortcut: "/favicon.ico",
@@ -61,6 +67,7 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "/",
+    types: { "application/rss+xml": "/blog/rss.xml" },
   },
   openGraph: {
     type: "website",
@@ -92,8 +99,26 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    // suppressHydrationWarning: the pre-paint intro script sets `data-intro` on
+    // this element before React hydrates, which React would otherwise report as
+    // a server/client attribute mismatch. Scoped to <html>'s own attributes.
+    <html
+      lang="en"
+      className={`${inter.variable} ${spaceGrotesk.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Runs before first paint so returning visitors never see the intro
+            overlay flash. See FirstVisitLoader for why this can't be an effect. */}
+        <script dangerouslySetInnerHTML={{ __html: FIRST_VISIT_LOADER_SCRIPT }} />
+      </head>
       <body>
+        <FirstVisitLoader />
+        {/* useSearchParams needs a Suspense boundary to avoid opting the whole
+            tree out of static rendering. */}
+        <Suspense fallback={null}>
+          <RouteProgress />
+        </Suspense>
         <JsonLd data={{
           "@context": "https://schema.org",
           "@graph": [
@@ -107,13 +132,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        <Suspense fallback={<Loader />}>
+        <Suspense fallback={<PageLoader />}>
           <Analytics />
           <SpeedInsights />
           <RefinedAgencyCursor />
           <Header />
           <main id="main-content" className="pt-16">{children}</main>
-          <ChatLiveLauncher />
+          <Footer />
         </Suspense>
       </body>
     </html>

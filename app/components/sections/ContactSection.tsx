@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import gsap from "gsap";
 import { useGsap } from "@/hooks/useGsap";
 import { portfolioData } from "@/lib/portfolio";
+import LiveChatPanel from "../chat-live/LiveChatPanel";
 import type { ContactPayload, ContactResponse } from "@/types/portfolio";
 import { track } from "@vercel/analytics";
 
@@ -21,6 +22,7 @@ export default function ContactSection() {
     "idle"
   );
   const [feedback, setFeedback] = useState("");
+  const [tab, setTab] = useState<"form" | "chat">("form");
   const successBadgeRef = useRef<HTMLDivElement | null>(null);
 
   const animateSection = useCallback((gsapInstance: typeof gsap, scopeEl: HTMLElement) => {
@@ -84,6 +86,22 @@ export default function ContactSection() {
       { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: "power2.out" }
     );
   }, [status]);
+
+  // A "/#chat" link (header nav, hero, blog CTAs) lands on the same contact
+  // card and just flips it to the live-chat tab — one destination for every
+  // "talk to me" entry point instead of a separate floating widget.
+  useEffect(() => {
+    const syncFromHash = () => {
+      if (window.location.hash !== "#chat") return;
+      setTab("chat");
+      // This section is next/dynamic-loaded, so on a cold load with #chat the
+      // browser has already given up on scrolling to it by the time it exists.
+      document.getElementById("chat")?.scrollIntoView({ block: "center" });
+    };
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, []);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -176,7 +194,37 @@ export default function ContactSection() {
             </div>
           </div>
 
-          <div className="contact-right rounded-xl border border-line bg-surface p-6 sm:p-8">
+          <div id="chat" className="contact-right scroll-mt-24 rounded-xl border border-line bg-surface p-6 sm:p-8">
+            <div role="tablist" aria-label="How to reach Jeet" className="mb-8 flex gap-1 rounded-full border border-line bg-white/[0.02] p-1">
+              {([
+                { id: "form", label: "Send a message" },
+                { id: "chat", label: "Live chat" },
+              ] as const).map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="tab"
+                  id={`contact-tab-${item.id}`}
+                  aria-selected={tab === item.id}
+                  aria-controls={`contact-panel-${item.id}`}
+                  onClick={() => setTab(item.id)}
+                  className={`flex-1 rounded-full px-4 py-2 text-sm transition-colors ${
+                    tab === item.id
+                      ? "bg-ink font-medium text-background"
+                      : "text-caption hover:text-ink"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div
+              role="tabpanel"
+              id="contact-panel-form"
+              aria-labelledby="contact-tab-form"
+              hidden={tab !== "form"}
+            >
             <form className="space-y-8" onSubmit={onSubmit}>
               <div className="sr-only" aria-hidden="true">
                 <label htmlFor="contact-website">Website</label>
@@ -254,6 +302,19 @@ export default function ContactSection() {
                 ) : null}
               </div>
             </form>
+            </div>
+
+            {/* Mounted regardless of the active tab so an in-flight
+                conversation keeps its Ably connection (and unread count)
+                while the visitor is looking at the form. */}
+            <div
+              role="tabpanel"
+              id="contact-panel-chat"
+              aria-labelledby="contact-tab-chat"
+              hidden={tab !== "chat"}
+            >
+              <LiveChatPanel active={tab === "chat"} />
+            </div>
           </div>
         </div>
       </div>

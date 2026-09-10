@@ -11,16 +11,23 @@
   --color-ink: #f5f5f5; /* headings / primary    — 18.1:1 */
   --color-body: #c4c8ce; /* body text             — 11.6:1 */
   --color-caption: #9ca3af; /* captions / labels     —  6.9:1 */
-  --color-muted: #6b7280; /* muted metadata / tags —  4.6:1 */
+  --color-muted: #7d8894; /* muted metadata        —  5.6:1 */
+  /* --color-muted was #6b7280 (4.6:1). It passes AA as body copy, but it was
+     being used for 10-12px uppercase tracked labels, where that ratio is not
+     enough to actually read. Anything at that size now uses --color-caption. */
 
   /* Accent */
   --color-accent: #34d399; /* links, pills, focus   —  9.4:1 */
 
-  /* Card surfaces */
-  --color-surface: #121212;
-  --color-surface-hover: #161616;
-  --color-line: #1f1f1f;
-  --color-line-strong: #2a2a2a;
+  /* Card surfaces.
+     #121212 on a #0a0a0a page is a ~1.1:1 step and #1f1f1f borders are ~1.3:1
+     — under the 3:1 a UI boundary needs, so card edges disappeared at normal
+     screen brightness. Light-alpha borders sit correctly on every tier. */
+  --color-surface: #141414;
+  --color-surface-hover: #1c1c1c;
+  --color-surface-raised: #1e1e1e;
+  --color-line: rgba(255, 255, 255, 0.09);
+  --color-line-strong: rgba(255, 255, 255, 0.16);
 
   /* Type families */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
@@ -37,7 +44,10 @@
 /* ------------------------------------------------------------------ */
 html,
 body {
-  overflow-x: hidden;
+  /* `clip`, not `hidden`: overflow:hidden makes this element a scroll
+     container, which silently disables position:sticky for every descendant.
+     `clip` cuts the same horizontal overflow without that side effect. */
+  overflow-x: clip;
   max-width: 100%;
 }
 
@@ -65,12 +75,12 @@ html {
 }
 
 section {
-  scroll-margin-top: 80px;
+  scroll-margin-top: 96px;
 }
 
 ::selection {
   background: rgba(52, 211, 153, 0.25);
-  color: #ffffff;
+  color: var(--color-ink);
 }
 
 /* Native cursor is hidden only while the custom cursor is confirmed mounted
@@ -105,6 +115,7 @@ html.custom-cursor-active [contenteditable="true"] {
   background-color: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   padding: 24px;
   transition: transform 0.3s ease, border-color 0.3s ease,
     background-color 0.3s ease;
@@ -143,6 +154,22 @@ html.custom-cursor-active [contenteditable="true"] {
   background: #ffffff;
 }
 
+/* Small uppercase chips: a fill keeps them legible where a hairline outline on
+   black does not. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid var(--color-line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-caption);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
 .btn-secondary {
   background: transparent;
   color: var(--color-ink);
@@ -152,8 +179,8 @@ html.custom-cursor-active [contenteditable="true"] {
 
 .btn-secondary:hover {
   transform: translateY(-2px);
-  border-color: #3d3d3d;
-  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .prose-portfolio h2 {
@@ -182,6 +209,26 @@ html.custom-cursor-active [contenteditable="true"] {
   border: 1px solid var(--color-line);
   background: var(--color-surface);
   padding: 1rem;
+}
+
+/* Highlighted blocks carry their own frame and background from CodeBlock. */
+.prose-portfolio .group > pre {
+  margin-top: 0;
+}
+
+.prose-portfolio pre code {
+  display: grid;
+  font-size: inherit;
+}
+
+/* Shiki emits one span per line; give the highlighted ones a marker. */
+.prose-portfolio pre code [data-line] {
+  padding-inline: 0.25rem;
+}
+
+.prose-portfolio pre code [data-highlighted-line] {
+  background: rgba(52, 211, 153, 0.1);
+  box-shadow: inset 2px 0 0 var(--color-accent);
 }
 
 .prose-portfolio code {
@@ -218,5 +265,449 @@ html.custom-cursor-active [contenteditable="true"] {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  First-visit intro loader                                           */
+/* ------------------------------------------------------------------ */
+/* The markup is always server-rendered, but every rule here is scoped to
+   `html[data-intro]`, which the pre-paint script in layout.tsx only sets when
+   the intro has not played yet this session. Returning visitors therefore get
+   no flash of the overlay, even though the element is in the initial HTML. */
+.intro {
+  display: none;
+}
+
+html[data-intro] {
+  /* Hold the page still underneath the overlay. */
+  overflow: hidden;
+}
+
+html[data-intro] .intro {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(110% 78% at 50% 44%, #0d1a13 0%, var(--color-background) 74%);
+  transition: opacity var(--intro-exit, 520ms) ease,
+    visibility var(--intro-exit, 520ms) ease;
+}
+
+html[data-intro] .intro[data-exiting] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.intro-stack {
+  width: min(84vw, 560px);
+  display: grid;
+  gap: clamp(18px, 3.4vh, 32px);
+  justify-items: center;
+}
+
+.intro-mark {
+  width: 100%;
+  max-height: 56vh;
+  display: block;
+  animation: intro-rise 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.intro-word {
+  width: 62%;
+  display: block;
+  animation: intro-rise 620ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+/* Indeterminate rail: page load has no meaningful progress number. */
+.intro-rail {
+  width: 62%;
+  height: 2px;
+  background: rgba(147, 196, 161, 0.13);
+  overflow: hidden;
+}
+
+.intro-rail i {
+  display: block;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #4e7a5c,
+    var(--color-accent),
+    transparent
+  );
+  animation: intro-sweep 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes intro-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@keyframes intro-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The global reduced-motion rule collapses every duration to 0.01ms, which
+     freezes loading indicators — the one place motion carries the meaning.
+     Progress feedback is exempt from motion reduction, so these keep running,
+     just slower and without the decorative entrance animations. */
+  .intro-mark,
+  .intro-word {
+    animation: none !important;
+  }
+
+  .intro-rail i {
+    animation: intro-sweep 2.6s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Route transition progress bar                                      */
+/* ------------------------------------------------------------------ */
+.route-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 10000;
+  height: 2px;
+  pointer-events: none;
+  background: transparent;
+}
+
+.route-progress-bar {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  /* scaleX is driven inline from the trickle loop; transform-origin keeps it
+     growing from the left edge instead of the centre. */
+  transform-origin: 0 50%;
+  transition: transform 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--color-accent) 35%, transparent),
+    var(--color-accent)
+  );
+  animation: route-progress-in var(--route-progress-fade, 260ms) ease both;
+}
+
+/* Bright head with a bloom, so the bar reads on a near-black page. */
+.route-progress-head {
+  position: absolute;
+  right: 0;
+  top: -1px;
+  height: 4px;
+  width: 96px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #eafff2);
+  box-shadow:
+    0 0 8px color-mix(in oklab, var(--color-accent) 70%, transparent),
+    0 0 24px color-mix(in oklab, var(--color-accent) 45%, transparent);
+}
+
+@keyframes route-progress-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Without this the global rule collapses the transition and the bar snaps
+     between trickle values instead of advancing. */
+  .route-progress-bar {
+    transition-duration: 200ms !important;
+    animation: none !important;
+  }
+}
+
+
+/* ------------------------------------------------------------------ */
+/*  Page (route segment) loader                                        */
+/* ------------------------------------------------------------------ */
+.page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 40px;
+  /* Fully opaque, no backdrop-filter: a translucent blur let the page's cards
+     and headings show through as soft light blobs behind the dial. */
+  background: var(--color-background);
+  animation: page-loader-in 200ms ease both;
+}
+
+@keyframes page-loader-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.page-loader-dial {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  display: grid;
+  place-items: center;
+}
+
+/* Static hairline frame. Gives the moving parts something to move against —
+   without it the orbit has no reference and reads as drift. */
+.page-loader-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-line);
+}
+
+/* Comet tail: a conic sweep clipped to a ring, rotating with the head. */
+.page-loader-comet {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 200deg,
+    color-mix(in oklab, var(--color-accent) 22%, transparent) 288deg,
+    color-mix(in oklab, var(--color-accent) 85%, transparent) 348deg,
+    #eafff2 360deg
+  );
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0);
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 3px),
+    #000 0
+  );
+  animation: page-loader-spin 1.35s linear infinite;
+}
+
+/* The bright head, kept as its own rotating layer so its glow is not clipped
+   by the comet's ring mask. */
+.page-loader-orbit {
+  position: absolute;
+  inset: 0;
+  animation: page-loader-spin 1.35s linear infinite;
+}
+
+.page-loader-orbit::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: #eafff2;
+  box-shadow:
+    0 0 10px color-mix(in oklab, var(--color-accent) 90%, transparent),
+    0 0 28px color-mix(in oklab, var(--color-accent) 55%, transparent);
+}
+
+/* Breathing core, on a deliberately different period to the orbit so the two
+   motions never sync up into a single pulse. */
+.page-loader-halo {
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--color-accent) 26%, transparent) 0%,
+    transparent 70%
+  );
+  animation: page-loader-breathe 2.9s ease-in-out infinite;
+}
+
+@keyframes page-loader-breathe {
+  0%,
+  100% {
+    transform: scale(0.86);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+/* The bare JL monogram — logo letterforms with the circuit traces stripped
+   out — used as a mask so the specular band travels across the real glyph
+   instead of across a text node. */
+.page-loader-monogram {
+  position: relative;
+  width: 78px;
+  /* 1.204 is the monogram's own aspect ratio; keep them in sync. */
+  aspect-ratio: 1.204;
+  background: linear-gradient(
+    100deg,
+    #6f9b80 0%,
+    #6f9b80 32%,
+    #eafff2 46%,
+    #ffffff 52%,
+    var(--color-accent) 62%,
+    #6f9b80 78%,
+    #6f9b80 100%
+  );
+  background-size: 280% 100%;
+  mask: url("/brand/jeetlabs-monogram.svg") center / contain no-repeat;
+  -webkit-mask: url("/brand/jeetlabs-monogram.svg") center / contain no-repeat;
+  animation: page-loader-sweep 2.1s linear infinite;
+}
+
+@keyframes page-loader-sweep {
+  from {
+    background-position: 140% 0;
+  }
+  to {
+    background-position: -140% 0;
+  }
+}
+
+@keyframes page-loader-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+.page-loader-meta {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+}
+
+.page-loader-rail {
+  width: 168px;
+  height: 2px;
+  background: var(--color-line);
+  overflow: hidden;
+}
+
+.page-loader-rail i {
+  display: block;
+  height: 100%;
+  width: 45%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-accent),
+    #eafff2,
+    transparent
+  );
+  animation: page-loader-shuttle 1.25s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes page-loader-shuttle {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(222%);
+  }
+}
+
+.page-loader-label {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-caption);
+}
+
+.page-loader-dots {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  margin-left: 8px;
+  height: 1em;
+}
+
+.page-loader-dots i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  animation: page-loader-dot 1.1s ease-in-out infinite;
+}
+
+.page-loader-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.page-loader-dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes page-loader-dot {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+/* The global reduced-motion rule collapses every duration to 0.01ms, which
+   froze this loader solid — a spinner that does not spin reads as a hung page.
+   Progress indicators are exempt from motion reduction, so the rotation and
+   the rail keep running at a calmer pace. Only the decorative parts stop: the
+   monogram's specular sweep and the halo's scaling both go static. */
+@media (prefers-reduced-motion: reduce) {
+  .page-loader-comet,
+  .page-loader-orbit {
+    animation: page-loader-spin 3s linear infinite !important;
+  }
+
+  .page-loader-rail i {
+    animation: page-loader-shuttle 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite
+      !important;
+  }
+
+  .page-loader-dots i {
+    animation: page-loader-dot 2s ease-in-out infinite !important;
+  }
+
+  .page-loader-monogram {
+    background: linear-gradient(160deg, #eafff2, var(--color-accent));
+    animation: none !important;
+  }
+
+  .page-loader-halo {
+    animation: none !important;
+    transform: scale(1);
+    opacity: 0.7;
+  }
+
+  .page-loader {
+    animation: none !important;
   }
 }

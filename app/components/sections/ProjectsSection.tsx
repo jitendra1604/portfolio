@@ -82,7 +82,7 @@ export default function ProjectsSection() {
 
   if (!projects.length) {
     return (
-      <section className="py-32 bg-black text-white text-center">
+      <section className="py-32 bg-background text-ink text-center">
         <p>No projects found.</p>
       </section>
     );
@@ -122,7 +122,7 @@ export default function ProjectsSection() {
                       {project.stack.map((tech) => (
                         <span
                           key={tech}
-                          className="rounded-full border border-line-strong px-3 py-1 text-xs uppercase tracking-[0.22em] text-muted"
+                          className="chip"
                         >
                           {tech}
                         </span>
@@ -232,7 +232,7 @@ export default function ProjectsSection() {
                         <ol className="mt-4 space-y-3 text-sm leading-7 text-body">
                           {project.detail.flow.map((step, index) => (
                             <li key={step}>
-                              <span className="mr-2 text-muted">
+                              <span className="mr-2 text-caption">
                                 {String(index + 1).padStart(2, "0")}
                               </span>
                               {step}
@@ -260,7 +260,7 @@ export default function ProjectsSection() {
                           {project.detail.screens?.map((screen) => (
                             <span
                               key={screen}
-                              className="rounded-full border border-line-strong px-3 py-2 text-xs text-muted"
+                              className="rounded-full border border-line bg-white/[0.06] px-3 py-2 text-xs text-caption"
                             >
                               {screen}
                             </span>
