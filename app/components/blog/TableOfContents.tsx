@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type TocEntry = { id: string; text: string; level: 2 | 3 };
 
@@ -14,7 +14,12 @@ export type TocEntry = { id: string; text: string; level: 2 | 3 };
  */
 export default function TableOfContents({ entries }: { entries: TocEntry[] }) {
   const [activeId, setActiveId] = useState<string>(entries[0]?.id ?? "");
-  const [progress, setProgress] = useState(0);
+  // Rail fill in px, measured against the stops themselves. It used to be a
+  // page-progress fraction, which ran on a different clock from the active
+  // stop: the fill could sit past a section the reader had not reached yet.
+  const [fill, setFill] = useState(0);
+  const listRef = useRef<HTMLOListElement>(null);
+  const stopRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   useEffect(() => {
     if (entries.length === 0) return;
@@ -28,20 +33,31 @@ export default function TableOfContents({ entries }: { entries: TocEntry[] }) {
       // Active section: the last heading to cross the top quarter of the
       // viewport — that reads as the section you are actually in.
       const marker = window.innerHeight * 0.25;
-      let current = headings[0];
-      for (const heading of headings) {
-        if (heading.getBoundingClientRect().top <= marker) current = heading;
-      }
+      let currentIndex = 0;
+      headings.forEach((heading, index) => {
+        if (heading.getBoundingClientRect().top <= marker) currentIndex = index;
+      });
+      const current = headings[currentIndex];
       setActiveId(current.id);
 
-      // Progress is measured across the article body, not the whole document,
-      // so the rail is full when the writing ends rather than after the
-      // footer has scrolled by.
-      const article = document.getElementById("top");
-      if (!article) return;
-      const rect = article.getBoundingClientRect();
-      const travelled = window.innerHeight * 0.5 - rect.top;
-      setProgress(Math.min(1, Math.max(0, travelled / Math.max(1, rect.height))));
+      // Fill reaches the active stop, then advances toward the next stop in
+      // step with how far through the active section the marker line is.
+      const list = listRef.current;
+      const stopTop = (index: number) => {
+        const stop = stopRefs.current[index];
+        if (!stop || !list) return 0;
+        return stop.getBoundingClientRect().top - list.getBoundingClientRect().top + stop.offsetHeight / 2;
+      };
+      const next = headings[currentIndex + 1];
+      let within = 0;
+      if (next) {
+        const start = current.getBoundingClientRect().top;
+        const end = next.getBoundingClientRect().top;
+        within = Math.min(1, Math.max(0, (marker - start) / Math.max(1, end - start)));
+      }
+      const from = stopTop(currentIndex);
+      const to = next ? stopTop(currentIndex + 1) : from;
+      setFill(from + (to - from) * within);
     };
 
     update();
@@ -62,12 +78,9 @@ export default function TableOfContents({ entries }: { entries: TocEntry[] }) {
       aria-label="On this page"
       className="sticky top-24 rounded-xl border border-line bg-surface p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
     >
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="text-[11.5px] uppercase tracking-[0.18em] text-caption">On this page</p>
-        <span className="text-[12px] font-medium tabular-nums text-accent">{Math.round(progress * 100)}%</span>
-      </div>
+      <p className="text-[11.5px] uppercase tracking-[0.18em] text-caption">On this page</p>
 
-      <ol className="relative mt-5">
+      <ol ref={listRef} className="relative mt-5">
         {/* The rail and its fill sit behind the stops. */}
         <span
           aria-hidden="true"
@@ -75,8 +88,8 @@ export default function TableOfContents({ entries }: { entries: TocEntry[] }) {
         />
         <span
           aria-hidden="true"
-          className="absolute left-[5.5px] top-3 w-px origin-top bg-accent/70 transition-transform duration-200 ease-out"
-          style={{ height: "calc(100% - 24px)", transform: `scaleY(${progress})` }}
+          className="absolute left-[5.5px] top-3 w-px bg-accent/70 transition-[height] duration-200 ease-out"
+          style={{ height: `${Math.max(0, fill - 12)}px` }}
         />
 
         {entries.map((entry, index) => {
@@ -93,6 +106,9 @@ export default function TableOfContents({ entries }: { entries: TocEntry[] }) {
               >
                 {/* Stop on the rail: filled once reached, ringed while current. */}
                 <span
+                  ref={(el) => {
+                    stopRefs.current[index] = el;
+                  }}
                   aria-hidden="true"
                   className={`mt-[7px] h-3 w-3 shrink-0 rounded-full border-2 transition-colors ${
                     isActive

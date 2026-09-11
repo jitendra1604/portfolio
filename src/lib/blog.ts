@@ -42,11 +42,22 @@ function slugify(input: string) {
 // no setup required. New files show up after the next deploy.
 // ---------------------------------------------------------------------------
 
+// Notion tags arrive slug-style ("engineering-process") while MDX ones are
+// written as prose ("AI Coding"). Both end up side by side on the index, so
+// normalise to words here; tagToSlug collapses either form to the same URL.
+function normalizeTag(tag: string): string {
+  return tag.replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function normalizeTags(tags: string[]): string[] {
+  return Array.from(new Set(tags.map(normalizeTag).filter(Boolean)));
+}
+
 // Accepts either `tags: [Foo, Bar]` or the legacy singular `tag: Foo` in frontmatter.
 function parseFrontmatterTags(data: Record<string, unknown>): string[] {
-  if (Array.isArray(data.tags)) return data.tags.map(String).filter(Boolean);
-  if (typeof data.tags === "string") return data.tags.split(",").map((t) => t.trim()).filter(Boolean);
-  if (data.tag) return [String(data.tag)];
+  if (Array.isArray(data.tags)) return normalizeTags(data.tags.map(String));
+  if (typeof data.tags === "string") return normalizeTags(data.tags.split(","));
+  if (data.tag) return normalizeTags([String(data.tag)]);
   return [];
 }
 
@@ -123,10 +134,10 @@ function extractNotionCover(page: any): string | undefined {
 // The Tag property may be configured as multi_select, select, or rich_text —
 // support all three rather than assuming one shape.
 function extractTags(prop: any): string[] {
-  if (Array.isArray(prop?.multi_select)) return prop.multi_select.map((t: any) => t.name).filter(Boolean);
-  if (prop?.select?.name) return [prop.select.name];
+  if (Array.isArray(prop?.multi_select)) return normalizeTags(prop.multi_select.map((t: any) => t.name ?? ""));
+  if (prop?.select?.name) return normalizeTags([prop.select.name]);
   const text = extractText(prop);
-  return text ? text.split(",").map((t: string) => t.trim()).filter(Boolean) : [];
+  return text ? normalizeTags(text.split(",")) : [];
 }
 
 function mapNotionPage(page: any): NotionMeta {

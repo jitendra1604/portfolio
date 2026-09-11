@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import type { ImgHTMLAttributes, ReactNode } from "react";
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import Link from "next/link";
 import { compileMDX } from "next-mdx-remote/rsc";
 import rehypePrettyCode from "rehype-pretty-code";
@@ -9,6 +9,9 @@ import ShareButtons from "../../components/ShareButtons";
 import ReadingProgress from "../../components/blog/ReadingProgress";
 import CodeBlock from "../../components/blog/CodeBlock";
 import TableOfContents, { type TocEntry } from "../../components/blog/TableOfContents";
+import MobileToc from "../../components/blog/MobileToc";
+import BackToTop from "../../components/blog/BackToTop";
+import ZoomImage from "../../components/blog/ZoomImage";
 import { getAllPosts, getPostBySlug, type BlogPost } from "@/lib/blog";
 import { siteIdentity, siteUrl } from "@/lib/site";
 import { tagToSlug } from "../tag/[tag]/page";
@@ -17,15 +20,6 @@ import { tagToSlug } from "../tag/[tag]/page";
 // then get cached — see `revalidate` below.
 export const dynamicParams = true;
 export const revalidate = 30;
-
-/**
- * Blog images come from Unsplash and Notion rather than the local asset
- * folder. A no-referrer policy is important for Notion's signed image URLs,
- * which can reject requests that include the site's origin as a referrer.
- */
-function BlogImage({ alt = "", ...props }: ImgHTMLAttributes<HTMLImageElement>) {
-  return <img {...props} alt={alt} loading="lazy" decoding="async" referrerPolicy="no-referrer" />;
-}
 
 function slugifyHeading(value: string) {
   return value
@@ -50,19 +44,102 @@ function headingText(children: ReactNode): string {
  * Headings carry ids so the table of contents, deep links and Google's
  * "jump to section" links all have something to anchor to.
  */
+// Notion to-do items reach MDX as "☐ text" (see humaniseMarkdown). With real
+// list markers on every <ul>, they would carry a disc and a box; the box is
+// the marker, so the disc goes.
+const TASK_MARKER = /^[☐☑]/;
+
+function leadingText(children: ReactNode): string {
+  const first = Array.isArray(children) ? children[0] : children;
+  return typeof first === "string" ? first : "";
+}
+
+// A heading that carries its own link: hover shows a "#" that deep-links to
+// the section, so a reader can hand someone one part of a post.
+function Heading({ level, children }: { level: 2 | 3; children?: ReactNode }) {
+  const id = slugifyHeading(headingText(children));
+  const Tag = level === 2 ? "h2" : "h3";
+  return (
+    <Tag id={id} className="group scroll-mt-28">
+      {children}
+      <a
+        href={`#${id}`}
+        aria-label="Link to this section"
+        className="ml-2 text-caption opacity-0 transition-opacity hover:text-accent group-hover:opacity-100 focus-visible:opacity-100"
+      >
+        #
+      </a>
+    </Tag>
+  );
+}
+
+// Notion callouts arrive as a blockquote whose first paragraph is led by an
+// emoji ("> 💡 Rule of thumb: …"). They read as asides, so draw them as one;
+// any other blockquote is a real quote.
+const CALLOUT_LEAD = /^\p{Extended_Pictographic}\uFE0F?\s/u;
+
+function firstParagraphLead(children: ReactNode): string {
+  const nodes = Array.isArray(children) ? children : [children];
+  for (const node of nodes) {
+    if (typeof node === "string") {
+      if (node.trim() === "") continue;
+      return node;
+    }
+    if (node && typeof node === "object" && "props" in node) {
+      return leadingText((node as { props: { children?: ReactNode } }).props.children);
+    }
+  }
+  return "";
+}
+
+function Blockquote({ children }: { children?: ReactNode }) {
+  const lead = firstParagraphLead(children);
+  if (!CALLOUT_LEAD.test(lead)) return <blockquote>{children}</blockquote>;
+  const [icon] = lead.match(CALLOUT_LEAD) ?? [""];
+  return (
+    <aside className="callout">
+      <span aria-hidden="true" className="callout-icon">{icon.trim()}</span>
+      <div className="callout-body">{children}</div>
+    </aside>
+  );
+}
+
+// Paragraphs inside a callout carry the emoji that Blockquote already drew
+// as the icon; drop it from the text.
+function Paragraph({ children }: { children?: ReactNode }) {
+  const lead = leadingText(children);
+  if (!CALLOUT_LEAD.test(lead)) return <p>{children}</p>;
+  const [icon] = lead.match(CALLOUT_LEAD) ?? [""];
+  const rest = Array.isArray(children) ? children.slice(1) : [];
+  return <p data-callout-lead="">{lead.slice(icon.length)}{rest}</p>;
+}
+
+// Off-site links open in a new tab and say so; the post stays put.
+function BodyLink({ href = "", children, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) {
+  const external = /^https?:\/\//.test(href) && !href.startsWith(siteUrl);
+  if (!external) return <a href={href} {...props}>{children}</a>;
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+      {children}
+      <span aria-hidden="true" className="ml-0.5 text-[0.8em] text-caption">↗</span>
+    </a>
+  );
+}
+
 const mdxComponents = {
-  img: BlogImage,
+  img: ZoomImage,
   pre: CodeBlock,
-  h2: ({ children }: { children?: ReactNode }) => (
-    <h2 id={slugifyHeading(headingText(children))} className="scroll-mt-28">
-      {children}
-    </h2>
-  ),
-  h3: ({ children }: { children?: ReactNode }) => (
-    <h3 id={slugifyHeading(headingText(children))} className="scroll-mt-28">
-      {children}
-    </h3>
-  ),
+  a: BodyLink,
+  p: Paragraph,
+  blockquote: Blockquote,
+  li: ({ children }: { children?: ReactNode }) =>
+    TASK_MARKER.test(leadingText(children)) ? (
+      <li className="-ml-6 list-none pl-0">{children}</li>
+    ) : (
+      <li>{children}</li>
+    ),
+  h2: ({ children }: { children?: ReactNode }) => <Heading level={2}>{children}</Heading>,
+  h3: ({ children }: { children?: ReactNode }) => <Heading level={3}>{children}</Heading>,
 };
 
 /** Table of contents is read off the markdown, before MDX compiles it. */
@@ -242,45 +319,89 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           pair is centred as one block. */}
       <div className="mx-auto flex max-w-3xl flex-col gap-12 xl:max-w-[1160px] xl:flex-row xl:gap-14">
         <div className="prose-portfolio w-full min-w-0 xl:max-w-3xl">
-          <Link href="/blog" className="text-sm text-caption hover:text-accent">← Back to blog</Link>
-
-          <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2">
-            {post.tags.slice(0, 3).map((tag) => (
-              <Link
-                key={tag}
-                href={`/blog/tag/${tagToSlug(tag)}`}
-                className="chip transition-colors hover:border-line-strong hover:text-ink"
-              >
-                {tag}
-              </Link>
-            ))}
-            {post.tags.length > 3 ? (
-              <span className="chip" title={post.tags.slice(3).join(", ")}>
-                +{post.tags.length - 3}
-              </span>
-            ) : null}
-          </div>
-
-          <h1 className="mt-5 text-4xl font-bold tracking-tight md:text-6xl">{post.title}</h1>
-          <p className="mt-5 text-xl text-body">{post.description}</p>
-
-          <p className="mt-5 text-sm text-caption">
-            By {siteIdentity.fullName} ·{" "}
-            <time dateTime={post.date}>{formatDate(post.date)}</time> · {post.readingTime} min read
-          </p>
-
-          <div className="mt-6">
-            <ShareButtons url={url} title={post.title} />
-          </div>
-
-          {post.cover ? (
-            <img
-              src={post.cover}
-              alt={post.title}
-              className="mt-10 w-full rounded-xl border border-line"
-              referrerPolicy="no-referrer"
+          {/* Header. A breadcrumb in place of the bare back-link says where
+              the post sits; the byline carries a face; the share row shares
+              a line with it instead of hanging below on its own. */}
+          <header className="relative">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -left-24 -top-32 h-72 w-72 rounded-full bg-accent/[0.07] blur-3xl"
             />
-          ) : null}
+
+            <nav aria-label="Breadcrumb" className="relative flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.2em] text-caption">
+              <Link href="/blog" className="transition-colors hover:text-accent">Blog</Link>
+              {post.tags[0] ? (
+                <>
+                  <span aria-hidden="true" className="text-line-strong">/</span>
+                  <Link href={`/blog/tag/${tagToSlug(post.tags[0])}`} className="text-accent transition-colors hover:text-ink">
+                    {post.tags[0]}
+                  </Link>
+                </>
+              ) : null}
+            </nav>
+
+            <h1 className="relative mt-6 text-balance text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl">
+              {post.title}
+            </h1>
+            <p className="relative mt-5 max-w-2xl text-pretty text-xl leading-relaxed text-body">{post.description}</p>
+
+            <div className="relative mt-8 flex flex-col gap-5 border-y border-line py-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/profile.png"
+                  alt=""
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-full border border-line object-cover"
+                />
+                <div className="text-sm leading-tight">
+                  <p className="font-medium text-ink">{siteIdentity.fullName}</p>
+                  <p className="mt-1 text-caption">
+                    <time dateTime={post.date}>{formatDate(post.date)}</time>
+                    <span aria-hidden="true"> · </span>
+                    {post.readingTime} min read
+                  </p>
+                </div>
+              </div>
+              <ShareButtons url={url} title={post.title} />
+            </div>
+
+            {post.tags.length > 1 ? (
+              <div className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-2">
+                {post.tags.slice(0, 4).map((tag) => (
+                  <Link
+                    key={tag}
+                    href={`/blog/tag/${tagToSlug(tag)}`}
+                    className="chip transition-colors hover:border-line-strong hover:text-ink"
+                  >
+                    {tag}
+                  </Link>
+                ))}
+                {post.tags.length > 4 ? (
+                  <span className="chip" title={post.tags.slice(4).join(", ")}>
+                    +{post.tags.length - 4}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+
+            {post.cover ? (
+              <figure className="relative mt-10 overflow-hidden rounded-xl border border-line">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={post.cover}
+                  alt={post.title}
+                  className="aspect-[21/9] w-full object-cover"
+                  referrerPolicy="no-referrer"
+                  fetchPriority="high"
+                />
+                <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background/70 to-transparent" />
+              </figure>
+            ) : null}
+          </header>
+
+          <MobileToc entries={toc} />
 
           <div className="mt-12 text-body">{renderedContent}</div>
 
@@ -289,6 +410,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               Last updated <time dateTime={post.updated}>{formatDate(post.updated)}</time>
             </p>
           ) : null}
+
+          {/* The post used to just stop. Give a reader who got this far the
+              obvious next moves before the author card. */}
+          <aside className="mt-12 flex flex-col gap-4 rounded-xl border border-accent/30 bg-accent/[0.06] p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold text-ink">Found this useful?</p>
+              <p className="mt-1 text-sm text-body">New posts land every couple of weeks — no newsletter, just a feed.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <a href="/blog/rss.xml" className="btn btn-secondary !px-4 !py-2.5 text-[13px]">Subscribe via RSS</a>
+              <a href={siteIdentity.linkedin} target="_blank" rel="noopener noreferrer" className="btn btn-secondary !px-4 !py-2.5 text-[13px]">Follow on LinkedIn</a>
+            </div>
+          </aside>
 
           {/* Author block — a named, credentialed author is what E-E-A-T asks
               for, and it gives the post somewhere to send readers next. */}
@@ -350,6 +484,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <TableOfContents entries={toc} />
         </aside>
       </div>
+      <BackToTop />
     </article>
   );
 }

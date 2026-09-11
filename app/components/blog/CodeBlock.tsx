@@ -30,18 +30,19 @@ export default function CodeBlock({ children, ...props }: CodeBlockProps) {
   };
 
   return (
-    <div className="group relative my-6">
-      <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
-        {language ? (
-          <span className="rounded-md bg-white/[0.06] px-2 py-1 text-[10.5px] uppercase tracking-[0.12em] text-caption">
-            {language}
-          </span>
-        ) : null}
+    <div className="group my-6 overflow-hidden rounded-xl border border-line bg-[#0d1117]">
+      {/* The label and copy button used to float over the code, and covered
+          the end of any first line longer than ~70 characters. A header strip
+          keeps them out of the code's way. */}
+      <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2">
+        <span className="text-[10.5px] uppercase tracking-[0.12em] text-caption">
+          {language ?? "code"}
+        </span>
         <button
           type="button"
           onClick={copy}
           aria-label={copied ? "Code copied" : "Copy code"}
-          className="rounded-md border border-line bg-surface px-2 py-1 text-[10.5px] uppercase tracking-[0.12em] text-caption opacity-0 transition-opacity hover:border-line-strong hover:text-ink focus-visible:opacity-100 group-hover:opacity-100"
+          className="rounded-md border border-line bg-surface px-2 py-1 text-[10.5px] uppercase tracking-[0.12em] text-caption transition-colors hover:border-line-strong hover:text-ink"
         >
           {copied ? "Copied" : "Copy"}
         </button>
@@ -51,7 +52,7 @@ export default function CodeBlock({ children, ...props }: CodeBlockProps) {
         {...props}
         // Overflowing code must be reachable without a mouse.
         tabIndex={0}
-        className="overflow-x-auto rounded-xl border border-line bg-[#0d1117] p-4 text-[13.5px] leading-6"
+        className="overflow-x-auto p-4 text-[13.5px] leading-6"
       >
         {children}
       </pre>

@@ -44,7 +44,10 @@ export default function PostCard({ post, isLead = false }: PostCardProps) {
         )}
       </h2>
 
-      <p className={`mt-3 text-body ${isLead ? "max-w-3xl" : ""}`}>{post.description}</p>
+      {/* Grid cards clamp the blurb: one six-line description stretched its
+          whole row and left its neighbour with a block of dead space above
+          the tags. The full text is on the post. */}
+      <p className={`mt-3 text-body ${isLead ? "max-w-3xl" : "line-clamp-3"}`}>{post.description}</p>
 
       {/* mt-auto so tag rows sit on the same baseline across a row of cards,
           however long the descriptions run. */}
