@@ -80,8 +80,14 @@ export default function Header() {
     // every section that hasn't mounted yet.
     const pendingHashes = new Set<string>();
 
+    // Sections that light up a menu item other than their own hash: the
+    // home page's Writing strip belongs to "Blog".
+    const aliases: Record<string, string> = { "#writing": "/blog" };
+
     const registerSection = (hash: string) => {
-      const item = menu.find((m) => m.href.endsWith(hash));
+      const item = aliases[hash]
+        ? menu.find((m) => m.href === aliases[hash])
+        : menu.find((m) => m.href.endsWith(hash));
       const section = document.querySelector(hash);
       if (!item || !section) return false;
 
@@ -101,6 +107,9 @@ export default function Header() {
       const hashIndex = item.href.indexOf("#");
       if (hashIndex === -1) return;
       const hash = item.href.slice(hashIndex);
+      if (!registerSection(hash)) pendingHashes.add(hash);
+    });
+    Object.keys(aliases).forEach((hash) => {
       if (!registerSection(hash)) pendingHashes.add(hash);
     });
 
@@ -134,8 +143,8 @@ export default function Header() {
     mobileTl.current
       .fromTo(
         mobileMenuRef.current,
-        { y: "-100%", opacity: 0 },
-        { y: "0%", opacity: 1, duration: 0.4, ease: "power3.out" }
+        { y: "-100%", autoAlpha: 0 },
+        { y: "0%", autoAlpha: 1, duration: 0.4, ease: "power3.out" }
       )
       .fromTo(
         ".mobile-nav-item",
@@ -232,6 +241,17 @@ export default function Header() {
                 </Link>
               </li>
             ))}
+            {/* The one action the nav had none of. */}
+            <li className="nav-item ml-2">
+              <Link
+                href="/#chat"
+                onClick={() => updateActiveSection("/#contact")}
+                data-magnetic
+                className="inline-flex items-center rounded-full border border-line-strong px-4 py-1.5 text-sm text-ink transition-colors hover:border-accent hover:text-accent"
+              >
+                Let&apos;s talk
+              </Link>
+            </li>
           </ul>
 
           {/* Mobile toggle */}
@@ -252,7 +272,10 @@ export default function Header() {
       <div
         id="mobile-navigation"
         ref={mobileMenuRef}
-        className={`fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 overflow-y-auto bg-background py-20 text-ink md:hidden ${
+        // Starts hidden in CSS, not just via GSAP's first render: the overlay
+        // is a full-screen slab of background, and anything that delays the
+        // timeline (hydration, a slow device) showed it over the hero.
+        className={`fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 overflow-y-auto bg-background py-20 text-ink opacity-0 invisible transition-none md:hidden ${
           menuOpen ? "pointer-events-auto" : "pointer-events-none"
         }`}
         aria-hidden={!menuOpen}

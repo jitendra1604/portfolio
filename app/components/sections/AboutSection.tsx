@@ -43,13 +43,14 @@ export default function AboutSection() {
     <section
       id="about"
       ref={scope}
-      className="relative py-24 md:py-32 bg-background text-ink px-6"
+      className="relative py-20 md:py-28 bg-background text-ink px-6"
     >
       <div className="max-w-[1200px] mx-auto grid md:grid-cols-2 gap-20">
 
         {/* LEFT SIDE — Narrative */}
         <div>
-          <h2 className="about-title text-4xl md:text-5xl font-bold tracking-tight mb-8">
+          <p className="about-title text-xs uppercase tracking-[0.3em] text-caption">About</p>
+          <h2 className="about-title mt-3 text-4xl md:text-5xl font-bold tracking-tight mb-8">
             {title}
           </h2>
 

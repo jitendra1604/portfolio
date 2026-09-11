@@ -13,6 +13,10 @@ export default function HeroSection() {
     { value: "100K+", label: "Users supported" },
     { value: "12", label: "Developers led" },
   ];
+  const currentRole = portfolioData.experience[0];
+  // Runs as a quiet ticker under the hero. Not in portfolio.json because it
+  // is a hero-only device, not a skills claim to keep in sync elsewhere.
+  const stack = ["React", "Next.js", "TypeScript", "Node.js", "AWS", "Docker", "Python", "Spring Boot", "CI/CD"];
 
   // const [headlineIndex, setHeadlineIndex] = useState(0);
   const currentIndex = useRef(0);
@@ -101,6 +105,18 @@ useEffect(() => {
         { y: 0, opacity: 1, delay: 0.5, duration: 0.8, ease: "power2.out" },
       );
 
+      gsapInstance.fromTo(
+        q(".hero-card"),
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, delay: 0.8, duration: 0.7, ease: "power3.out" },
+      );
+
+      gsapInstance.fromTo(
+        q(".hero-ticker"),
+        { opacity: 0 },
+        { opacity: 1, delay: 1, duration: 0.8, ease: "power2.out" },
+      );
+
       // Image parallax
       gsapInstance.to(q(".hero-image"), {
         y: 25,
@@ -142,7 +158,7 @@ useEffect(() => {
   className="
     hero-headline
     relative
-    h-[230px]
+    h-[200px]
     sm:h-[240px]
     md:h-[280px]
     lg:h-[320px]
@@ -221,27 +237,24 @@ useEffect(() => {
             </div>
           </div>
 
-          <div className="hero-panel relative h-[clamp(600px,90vh,900px)] w-full overflow-visible">
-            {/* soft ambient depth behind the subject */}
+          {/* Below lg the panel is sized by the image (2:3), not a fixed
+              height: a fixed height left a screen of black between the stats
+              and a passport-sized portrait pinned to its bottom. */}
+          <div className="hero-panel relative mx-auto aspect-[2/3] max-h-[72vh] w-full max-w-[420px] overflow-visible lg:mx-0 lg:aspect-auto lg:max-h-none lg:h-[clamp(520px,74vh,720px)] lg:max-w-none">
+            {/* Accent rim behind the subject: the one warm point in an otherwise
+                monochrome frame, so the eye lands on the face. */}
+            <div className="pointer-events-none absolute left-1/2 top-[22%] h-[320px] w-[320px] -translate-x-1/2 rounded-full bg-accent/[0.10] blur-[110px] lg:left-auto lg:right-[6%] lg:h-[420px] lg:w-[420px] lg:translate-x-0" />
             <div className="absolute left-1/2 top-1/4 hidden h-72 w-72 -translate-x-1/2 rounded-full bg-white/[0.04] blur-3xl lg:block" />
             <div
               className="
+                    hero-portrait
                     absolute
-                    left-1/2
-                    -translate-x-1/2
-                    top-[-40px]
-                    h-[105%]
-                    w-[100%]
-                right-[-10%]
-                    md:top-[-60px]
-                    md:w-[115%]
-                md:right-[-10%]
-                    lg:left-auto
-                    lg:translate-x-0
+                    inset-0
+                    lg:inset-auto
                     lg:right-[-10%]
-                    lg:top-[-90px]
+                    lg:bottom-0
+                    lg:h-[112%]
                     lg:w-[110%]
-
                     xl:right-[-25%]
                     xl:w-[115%]
                   "
@@ -254,19 +267,45 @@ useEffect(() => {
                 sizes="(max-width: 1024px) 85vw, 700px"
                 className="
                   hero-image
-                  object-contain
-                  object-bottom
-                  object-center
-                  lg:object-right
+                  object-cover
+                  object-top
+                  lg:object-contain
+                  lg:object-right-bottom
                 "
               />
             </div>
 
-            {/* ground the portrait into the page background — exact black point match, no rectangular seam */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent" />
+            {/* Where he is now. Anchored to the portrait so the picture says
+                something, not just decorates. */}
+            <div className="hero-card absolute bottom-6 left-4 z-30 flex items-center gap-3 rounded-xl border border-line bg-surface/80 px-4 py-3 shadow-[0_20px_60px_rgba(0,0,0,0.5)] backdrop-blur-md sm:left-8 lg:bottom-16 lg:left-0">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent" />
+              </span>
+              <div className="text-xs leading-tight">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-caption">Currently at</p>
+                <p className="mt-1 font-medium text-ink">{currentRole.company}</p>
+                <p className="mt-1 text-caption">Since {currentRole.duration.split(" - ")[0]}</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Stack ticker: the tools, once, quietly, without a "Skills" section
+            shouting them. Paused on hover so it can be read. */}
+        <div className="hero-ticker relative mt-4 overflow-hidden border-t border-white/10 pt-5 [mask-image:linear-gradient(90deg,transparent,#000_12%,#000_88%,transparent)]">
+          <div className="ticker-track flex w-max gap-10 whitespace-nowrap text-[11px] uppercase tracking-[0.28em] text-muted">
+            {[...stack, ...stack].map((item, index) => (
+              <span key={`${item}-${index}`} className="flex items-center gap-10">
+                {item}
+                <span aria-hidden="true" className="h-1 w-1 rounded-full bg-white/20" />
+              </span>
+            ))}
           </div>
         </div>
       </div>
+
     </section>
   );
 }

@@ -98,9 +98,29 @@ export default function ContactSection() {
       // browser has already given up on scrolling to it by the time it exists.
       document.getElementById("chat")?.scrollIntoView({ block: "center" });
     };
+    // Next's <Link> pushes history without a hashchange event, so a same-page
+    // click on a #chat link never reached syncFromHash. Catch the click itself
+    // and let the router do the scrolling.
+    const onClick = (event: MouseEvent) => {
+      const link = (event.target as Element | null)?.closest?.("a[href]");
+      if (!link) return;
+      const href = link.getAttribute("href") ?? "";
+      if (!/#chat$/.test(href)) return;
+      setTab("chat");
+      // The router scrolls immediately, but the dynamic sections above this
+      // one are still mounting and push the card down after it has scrolled.
+      // Re-aim once they have settled.
+      window.setTimeout(() => {
+        document.getElementById("chat")?.scrollIntoView({ block: "center", behavior: "smooth" });
+      }, 450);
+    };
     syncFromHash();
     window.addEventListener("hashchange", syncFromHash);
-    return () => window.removeEventListener("hashchange", syncFromHash);
+    document.addEventListener("click", onClick);
+    return () => {
+      window.removeEventListener("hashchange", syncFromHash);
+      document.removeEventListener("click", onClick);
+    };
   }, []);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -135,10 +155,11 @@ export default function ContactSection() {
     <section
       id="contact"
       ref={scope}
-      className="bg-background px-6 py-24 text-ink md:py-32"
+      className="bg-background px-6 py-20 text-ink md:py-28"
     >
       <div className="mx-auto max-w-[1200px]">
-        <h2 className="contact-title text-center text-4xl font-bold tracking-tight md:text-5xl">
+        <p className="contact-title text-center text-xs uppercase tracking-[0.3em] text-caption">Contact</p>
+        <h2 className="contact-title mt-3 text-center text-4xl font-bold tracking-tight md:text-5xl">
           Let’s Build Something Meaningful
         </h2>
 

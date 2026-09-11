@@ -50,7 +50,7 @@ export default function HowIBuildSection() {
     <section
       id="how-i-build"
       ref={scope}
-      className="bg-background px-6 py-24 text-ink md:py-32"
+      className="bg-background px-6 py-20 text-ink md:py-28"
     >
       <div className="mx-auto max-w-[1200px]">
         <div className="how-title max-w-3xl">

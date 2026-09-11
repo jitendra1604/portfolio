@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import HeroSection from "./components/sections/HeroSection";
 import SectionSkeleton from "./components/SectionSkeleton";
+import LatestWritingSection from "./components/sections/LatestWritingSection";
 
 const AboutSection = dynamic(() => import("./components/sections/AboutSection"), {
   loading: () => <SectionSkeleton titleWidth="w-40" />,
@@ -37,6 +38,10 @@ const LiveSystemConsole = dynamic(() => import("./components/LiveSystemConsole")
   loading: () => <SectionSkeleton titleWidth="w-52" />,
 });
 
+// Latest Writing pulls Notion/MDX posts; cache the page like the blog index
+// does instead of fetching Notion on every request.
+export const revalidate = 30;
+
 export default function Home() {
   return (
     <>
@@ -45,6 +50,7 @@ export default function Home() {
       <ProjectsSection />
       <HowIBuildSection />
       <ExperienceSection />
+      <LatestWritingSection />
       <ContactSection />
       <LiveSystemConsole />
     </>

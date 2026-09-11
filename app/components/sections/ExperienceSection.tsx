@@ -70,11 +70,12 @@ export default function ExperienceSection() {
     <section
       id="experience"
       ref={scope}
-      className="relative py-24 md:py-32 bg-background text-ink px-6"
+      className="relative py-20 md:py-28 bg-background text-ink px-6"
     >
       <div className="max-w-[1200px] mx-auto">
 
-        <h2 className="experience-title text-4xl md:text-5xl font-bold mb-24 tracking-tight text-center">
+        <p className="experience-title text-center text-xs uppercase tracking-[0.3em] text-caption">Career</p>
+        <h2 className="experience-title mt-3 text-4xl md:text-5xl font-bold mb-24 tracking-tight text-center">
           Experience
         </h2>
 

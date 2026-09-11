@@ -41,9 +41,19 @@ export default function RefinedAgencyCursor() {
 
     // Park both layers off-screen, not at the implicit 0,0: until the pointer
     // reports a position, anything made visible would sit in the top-left
-    // corner. The dot is driven by quickTo, which does not run until the first
-    // mousemove, so it would stay there.
-    gsap.set([dot, ring], { xPercent: -50, yPercent: -50, opacity: 0, x: -9999, y: -9999 });
+    // corner. The dot is only written on mousemove, so it would stay there.
+    gsap.set([dot, ring], {
+      xPercent: -50,
+      yPercent: -50,
+      opacity: 0,
+      x: -9999,
+      y: -9999,
+      force3D: true,
+    });
+    // Tailwind's rounded-full is calc(infinity * 1px); GSAP can't tween from
+    // that, so every borderRadius tween on the ring silently no-op'd and the
+    // wrap highlight stayed a capsule around square targets. Start numeric.
+    gsap.set(ring, { borderRadius: 999 });
 
     const mouse = { x: -9999, y: -9999 };
     const ringPos = { x: mouse.x, y: mouse.y };
@@ -55,8 +65,12 @@ export default function RefinedAgencyCursor() {
     let magneticEl: HTMLElement | null = null;
     const press = { value: 1 };
 
-    const dotX = gsap.quickTo(dot, "x", { duration: 0.12, ease: "power3" });
-    const dotY = gsap.quickTo(dot, "y", { duration: 0.12, ease: "power3" });
+    // The dot is the "real" pointer, so it must not lag: write its transform
+    // synchronously on every move instead of tweening toward it.
+    const setDot = gsap.quickSetter(dot, "css") as (v: object) => void;
+    const setRing = gsap.quickSetter(ring, "css") as (v: object) => void;
+    let magX: ((v: number) => void) | null = null;
+    let magY: ((v: number) => void) | null = null;
 
     // --- States -------------------------------------------------------------
     const toDefault = () => {
@@ -74,12 +88,14 @@ export default function RefinedAgencyCursor() {
         opacity: visible ? 1 : 0,
         duration: 0.4,
         ease: "power3.out",
+        overwrite: "auto",
       });
       gsap.to(dot, {
         scale: 1,
         backgroundColor: "#ffffff",
         opacity: visible ? 1 : 0,
         duration: 0.3,
+        overwrite: "auto",
       });
     };
 
@@ -90,7 +106,12 @@ export default function RefinedAgencyCursor() {
       hoverEl = el;
       dotRest = 0.5;
       const rect = el.getBoundingClientRect();
-      const radius = Math.min(14, rect.height / 2 + 6);
+      // The ring takes the element's own corner shape, grown by its inset, so
+      // a pill gets a pill and a card gets a card. A fixed radius made every
+      // rectangular target look like it had been wrapped in a capsule.
+      const ownRadius = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+      const ringHeight = rect.height + 14;
+      const radius = Math.min(ringHeight / 2, Math.max(6, ownRadius + 7));
       gsap.set([dot, ring], { mixBlendMode: "normal" });
       gsap.to(ring, {
         width: rect.width + 18,
@@ -101,12 +122,14 @@ export default function RefinedAgencyCursor() {
         opacity: 1,
         duration: 0.35,
         ease: "power3.out",
+        overwrite: "auto",
       });
       gsap.to(dot, {
         scale: dotRest,
         backgroundColor: ACCENT,
         opacity: 1,
         duration: 0.3,
+        overwrite: "auto",
       });
     };
 
@@ -114,7 +137,7 @@ export default function RefinedAgencyCursor() {
       if (state === "text") return;
       state = "text";
       hoverEl = null;
-      gsap.to([dot, ring], { opacity: 0, duration: 0.2 });
+      gsap.to([dot, ring], { opacity: 0, duration: 0.2, overwrite: "auto" });
     };
 
     // --- Visibility ---------------------------------------------------------
@@ -135,16 +158,24 @@ export default function RefinedAgencyCursor() {
       // known is what keeps the cursor out of the corner.
       if (visible || !hasPosition) return;
       visible = true;
-      if (state !== "text") gsap.to([dot, ring], { opacity: 1, duration: 0.3 });
+      if (state !== "text")
+        gsap.to([dot, ring], { opacity: 1, duration: 0.3, overwrite: "auto" });
     };
     const hide = () => {
       visible = false;
-      gsap.to([dot, ring], { opacity: 0, duration: 0.3 });
+      gsap.to([dot, ring], { opacity: 0, duration: 0.3, overwrite: "auto" });
     };
 
     // --- Magnetic pull ------------------------------------------------------
     const resetMagnetic = (el: HTMLElement) => {
-      gsap.to(el, { x: 0, y: 0, duration: 0.6, ease: "elastic.out(1, 0.3)" });
+      magX = magY = null;
+      gsap.to(el, {
+        x: 0,
+        y: 0,
+        duration: 0.6,
+        ease: "elastic.out(1, 0.3)",
+        overwrite: "auto",
+      });
     };
 
     // --- Pointer movement ---------------------------------------------------
@@ -152,8 +183,7 @@ export default function RefinedAgencyCursor() {
       if (!hasPosition) placeAt(e.clientX, e.clientY);
       mouse.x = e.clientX;
       mouse.y = e.clientY;
-      dotX(e.clientX);
-      dotY(e.clientY);
+      setDot({ x: e.clientX, y: e.clientY });
       show();
 
       const target = e.target as HTMLElement;
@@ -172,15 +202,17 @@ export default function RefinedAgencyCursor() {
       if (!reduceMotion) {
         const mag = target.closest("[data-magnetic]") as HTMLElement | null;
         if (mag) {
+          if (magneticEl !== mag) {
+            if (magneticEl) resetMagnetic(magneticEl);
+            magneticEl = mag;
+            // One reusable tween per element instead of a fresh gsap.to on
+            // every mousemove (those stacked up and fought each other).
+            magX = gsap.quickTo(mag, "x", { duration: 0.4, ease: "power3" });
+            magY = gsap.quickTo(mag, "y", { duration: 0.4, ease: "power3" });
+          }
           const rect = mag.getBoundingClientRect();
-          gsap.to(mag, {
-            x: (e.clientX - (rect.left + rect.width / 2)) * 0.35,
-            y: (e.clientY - (rect.top + rect.height / 2)) * 0.35,
-            duration: 0.4,
-            ease: "power3.out",
-          });
-          if (magneticEl && magneticEl !== mag) resetMagnetic(magneticEl);
-          magneticEl = mag;
+          magX!((e.clientX - (rect.left + rect.width / 2)) * 0.35);
+          magY!((e.clientY - (rect.top + rect.height / 2)) * 0.35);
         } else if (magneticEl) {
           resetMagnetic(magneticEl);
           magneticEl = null;
@@ -199,7 +231,11 @@ export default function RefinedAgencyCursor() {
     };
 
     // --- Ticker: follow + (default-only) squash & stretch -------------------
-    const tick = () => {
+    // Follow strength is expressed per second and converted with the frame
+    // delta, so the ring feels identical at 60Hz, 120Hz and during frame drops
+    // (a fixed per-frame factor ran twice as fast on high-refresh displays).
+    const FOLLOW = 16;
+    const tick = (_time: number, deltaTime: number) => {
       if (!hasPosition) return;
       let tx = mouse.x;
       let ty = mouse.y;
@@ -228,11 +264,12 @@ export default function RefinedAgencyCursor() {
         }
       }
 
-      ringPos.x += (tx - ringPos.x) * (reduceMotion ? 1 : 0.22);
-      ringPos.y += (ty - ringPos.y) * (reduceMotion ? 1 : 0.22);
+      const k = reduceMotion ? 1 : 1 - Math.exp((-FOLLOW * deltaTime) / 1000);
+      ringPos.x += (tx - ringPos.x) * k;
+      ringPos.y += (ty - ringPos.y) * k;
 
       if (reduceMotion) {
-        gsap.set(ring, { x: ringPos.x, y: ringPos.y });
+        setRing({ x: ringPos.x, y: ringPos.y });
         return;
       }
 
@@ -242,7 +279,7 @@ export default function RefinedAgencyCursor() {
         state === "default" ? Math.min(Math.hypot(dx, dy) / 260, 0.34) : 0;
       const angle = state === "default" ? Math.atan2(dy, dx) * (180 / Math.PI) : 0;
 
-      gsap.set(ring, {
+      setRing({
         x: ringPos.x,
         y: ringPos.y,
         rotation: angle,
@@ -252,7 +289,7 @@ export default function RefinedAgencyCursor() {
     };
     gsap.ticker.add(tick);
 
-    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mousemove", onMove, { passive: true });
     window.addEventListener("mousedown", onDown);
     window.addEventListener("mouseup", onUp);
     // mouseenter carries coordinates, so the cursor can appear in the right
@@ -290,11 +327,11 @@ export default function RefinedAgencyCursor() {
     <>
       <div
         ref={ringRef}
-        className="pointer-events-none fixed left-0 top-0 z-[99998] h-9 w-9 rounded-full border-[1.5px] border-white/60 mix-blend-difference"
+        className="pointer-events-none fixed left-0 top-0 z-[99998] h-9 w-9 border-[1.5px] border-white/60 mix-blend-difference will-change-transform"
       />
       <div
         ref={dotRef}
-        className="pointer-events-none fixed left-0 top-0 z-[99999] h-1.5 w-1.5 rounded-full bg-white mix-blend-difference"
+        className="pointer-events-none fixed left-0 top-0 z-[99999] h-1.5 w-1.5 rounded-full bg-white mix-blend-difference will-change-transform"
       />
     </>
   );
