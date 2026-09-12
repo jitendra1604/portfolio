@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getAllPosts } from "@/lib/blog";
 import { siteUrl } from "@/lib/site";
-import { portfolioData } from "@/lib/portfolio";
 
 function validDate(value: string): Date | undefined {
   if (!value) return undefined;
@@ -11,8 +10,9 @@ function validDate(value: string): Date | undefined {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = await getAllPosts();
-  // Tag pages are noindex (thin ~100-word listings) and deliberately left
-  // out of the sitemap so crawl budget goes to posts and case studies.
+  // Tag pages and /projects/* are noindex (thin listings and summary-level
+  // case studies) and deliberately left out of the sitemap so crawl budget
+  // goes to the home page and posts.
   return [
     {
       url: siteUrl,
@@ -26,12 +26,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.8,
     },
-    ...portfolioData.projects.map((project) => ({
-      url: `${siteUrl}/projects/${project.slug}`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
-    })),
     ...posts
       .filter((post) => post.source !== "external")
       .map((post) => {

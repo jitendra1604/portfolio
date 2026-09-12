@@ -32,6 +32,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title,
     description: project.description,
     keywords: project.stack,
+    // Case studies are ~300 visible words and read as summaries. Kept out of
+    // the index (and the sitemap, and homepage links) until they carry real
+    // numbers and constraints; a thin page ranking hurts more than no page.
+    robots: { index: false, follow: false },
     alternates: { canonical: `/projects/${slug}` },
     openGraph: {
       type: "article",

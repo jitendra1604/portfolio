@@ -1,20 +1,19 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import Link from "next/link";
 import gsap from "gsap";
 import { useGsap } from "@/hooks/useGsap";
 import { portfolioData } from "@/lib/portfolio";
 import { flagshipProjectSlugs } from "@/lib/site";
-import { track } from "@vercel/analytics";
 import FlowStrip from "../projects/FlowStrip";
 import type { PortfolioProject } from "@/types/portfolio";
 
 /**
  * Seven projects used to be seven identical full-width cards, each hiding
  * its case study behind an accordion. Now the three flagships get a feature
- * card with the system flow drawn on it, the rest sit in a compact grid, and
- * every card is a link to a real /projects/[slug] page.
+ * card with the system flow drawn on it, the rest sit in a compact grid.
+ * Cards deliberately do not link to /projects/[slug]: those pages are noindex
+ * until they carry real numbers, and an internal link would invite the crawl.
  */
 export default function ProjectsSection() {
   const projects = useMemo(() => portfolioData.projects ?? [], []);
@@ -119,7 +118,6 @@ function Meta({ project }: { project: PortfolioProject }) {
 }
 
 function FeatureCard({ project, index }: { project: PortfolioProject; index: number }) {
-  const href = `/projects/${project.slug}`;
   return (
     <article className="project-card card group relative">
       <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-10">
@@ -131,16 +129,7 @@ function FeatureCard({ project, index }: { project: PortfolioProject; index: num
             <Meta project={project} />
           </div>
 
-          <h3 className="mt-3 text-3xl font-semibold tracking-tight">
-            <Link
-              href={href}
-              onClick={() => track("project_card_clicked", { project: project.slug })}
-              // Stretched link: the whole card is the target.
-              className="after:absolute after:inset-0 hover:text-accent"
-            >
-              {project.name}
-            </Link>
-          </h3>
+          <h3 className="mt-3 text-3xl font-semibold tracking-tight">{project.name}</h3>
           <p className="mt-3 max-w-xl text-base leading-7 text-body">{project.description}</p>
 
           {project.outcome ? (
@@ -155,10 +144,6 @@ function FeatureCard({ project, index }: { project: PortfolioProject; index: num
               <span key={tech} className="chip">{tech}</span>
             ))}
           </div>
-
-          <span className="mt-6 inline-flex items-center gap-2 text-sm text-accent transition-transform group-hover:translate-x-0.5">
-            Read the case study <span aria-hidden="true">→</span>
-          </span>
         </div>
 
         <div className="min-w-0 self-center">
@@ -171,19 +156,10 @@ function FeatureCard({ project, index }: { project: PortfolioProject; index: num
 }
 
 function CompactCard({ project }: { project: PortfolioProject }) {
-  const href = `/projects/${project.slug}`;
   return (
     <article className="project-card card relative flex flex-col">
       <Meta project={project} />
-      <h3 className="mt-2 text-lg font-semibold tracking-tight">
-        <Link
-          href={href}
-          onClick={() => track("project_card_clicked", { project: project.slug })}
-          className="after:absolute after:inset-0 hover:text-accent"
-        >
-          {project.name}
-        </Link>
-      </h3>
+      <h3 className="mt-2 text-lg font-semibold tracking-tight">{project.name}</h3>
       <p className="mt-2 line-clamp-3 text-sm leading-6 text-body">{project.description}</p>
       <div className="mt-auto flex flex-wrap gap-1.5 pt-4">
         {project.stack.slice(0, 3).map((tech) => (
