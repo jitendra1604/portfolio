@@ -52,6 +52,9 @@ export async function generateMetadata({ params }: { params: Promise<{ tag: stri
     title,
     description,
     keywords: [match.label],
+    // Tag listings are ~100 words each: thin pages that dilute crawl budget.
+    // Keep them crawlable so link equity flows to the posts, but out of the index.
+    robots: { index: false, follow: true },
     alternates: { canonical: `/blog/tag/${tag}` },
     openGraph: {
       type: "website",

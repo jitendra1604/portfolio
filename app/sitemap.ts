@@ -2,7 +2,6 @@ import type { MetadataRoute } from "next";
 import { getAllPosts } from "@/lib/blog";
 import { siteUrl } from "@/lib/site";
 import { portfolioData } from "@/lib/portfolio";
-import { tagToSlug } from "./blog/tag/[tag]/page";
 
 function validDate(value: string): Date | undefined {
   if (!value) return undefined;
@@ -12,6 +11,8 @@ function validDate(value: string): Date | undefined {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const posts = await getAllPosts();
+  // Tag pages are noindex (thin ~100-word listings) and deliberately left
+  // out of the sitemap so crawl budget goes to posts and case studies.
   return [
     {
       url: siteUrl,
@@ -44,11 +45,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           priority: 0.7,
         };
       }),
-    ...Array.from(new Set(posts.flatMap((post) => post.tags).map(tagToSlug))).map((tag) => ({
-      url: `${siteUrl}/blog/tag/${tag}`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.5,
-    })),
   ];
 }
