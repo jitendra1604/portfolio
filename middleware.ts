@@ -17,5 +17,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: "/:path*",
+  // Only pages need the host check; running the middleware for every static
+  // asset added edge latency to each request for nothing.
+  matcher: ["/((?!_next/static|_next/image|brand/|favicon|.*\\.(?:png|svg|ico|webp|woff2?)$).*)"],
 };

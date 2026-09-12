@@ -4,7 +4,16 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import gsap from "gsap";
 import { useGsap } from "@/hooks/useGsap";
 import { portfolioData } from "@/lib/portfolio";
-import LiveChatPanel from "../chat-live/LiveChatPanel";
+import dynamic from "next/dynamic";
+
+// The chat panel pulls in the Ably client (~200 KB). Nobody needs it until
+// the Live chat tab is open, so it stays out of the home page bundle.
+const LiveChatPanel = dynamic(() => import("../chat-live/LiveChatPanel"), {
+  ssr: false,
+  loading: () => (
+    <p className="py-10 text-center text-sm text-caption">Connecting to chat…</p>
+  ),
+});
 import type { ContactPayload, ContactResponse } from "@/types/portfolio";
 import { track } from "@vercel/analytics";
 
@@ -334,7 +343,7 @@ export default function ContactSection() {
               aria-labelledby="contact-tab-chat"
               hidden={tab !== "chat"}
             >
-              <LiveChatPanel active={tab === "chat"} />
+              {tab === "chat" ? <LiveChatPanel active /> : null}
             </div>
           </div>
         </div>

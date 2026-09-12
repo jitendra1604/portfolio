@@ -17,6 +17,13 @@ const nextConfig: NextConfig = {
         { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
         { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
       ],
+    }, {
+      // Brand assets and the portrait are content-addressed by their filename
+      // in practice (they change with a deploy, never in place), so let the
+      // browser keep them. They shipped with max-age=0 and were re-validated
+      // on every visit, which Lighthouse flags and the intro loader feels.
+      source: "/(brand/.*|profile\\.png|jeet-logo.*\\.png|favicon.*|android-chrome.*|apple-touch-icon\\.png)",
+      headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
     }];
   },
 };

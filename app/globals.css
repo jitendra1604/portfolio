@@ -432,6 +432,7 @@ html[data-intro] .intro[data-exiting] {
 
 .intro-mark {
   width: 100%;
+  height: auto;
   max-height: 56vh;
   display: block;
   animation: intro-rise 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -439,6 +440,7 @@ html[data-intro] .intro[data-exiting] {
 
 .intro-word {
   width: 62%;
+  height: auto;
   display: block;
   animation: intro-rise 620ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
 }

@@ -12,8 +12,9 @@ import { useEffect, useState } from "react";
 
 export const FIRST_VISIT_LOADER_KEY = "jl:intro-seen";
 
-/** Minimum time the mark stays on screen, so it reads as intentional. */
-const MIN_VISIBLE_MS = 1600;
+/** Minimum time the mark stays on screen, so it reads as intentional.
+ *  Every ms here is added straight to Speed Index for first visits. */
+const MIN_VISIBLE_MS = 1100;
 /** Must match the --intro-exit duration in globals.css. */
 const EXIT_MS = 520;
 
@@ -28,11 +29,20 @@ const EXIT_MS = 520;
  */
 export const FIRST_VISIT_LOADER_ATTR = "data-intro";
 
+export const INTRO_MARK_SRC = "/brand/jeetlabs-mark-animated.svg";
+export const INTRO_WORD_SRC = "/brand/jeetlabs-word.svg";
+
+// When the intro is going to play, its two images are the first paint — and
+// the animated mark was the page's LCP element, discovered late because it
+// sits inside an <img> deep in the body. Preload them from the same
+// pre-paint script, so returning visitors (no intro) pay nothing.
 export const FIRST_VISIT_LOADER_SCRIPT = `try{if(!sessionStorage.getItem(${JSON.stringify(
   FIRST_VISIT_LOADER_KEY
-)}))document.documentElement.setAttribute(${JSON.stringify(
+)})){document.documentElement.setAttribute(${JSON.stringify(
   FIRST_VISIT_LOADER_ATTR
-)},"1")}catch(e){}`;
+)},"1");for(var s of [${JSON.stringify(INTRO_MARK_SRC)},${JSON.stringify(
+  INTRO_WORD_SRC
+)}]){var l=document.createElement("link");l.rel="preload";l.as="image";l.href=s;l.fetchPriority="high";document.head.appendChild(l)}}}catch(e){}`;
 
 export default function FirstVisitLoader() {
   const [state, setState] = useState<"idle" | "visible" | "exiting" | "done">(
@@ -104,18 +114,26 @@ export default function FirstVisitLoader() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           className="intro-mark"
-          src="/brand/jeetlabs-mark-animated.svg"
+          src={INTRO_MARK_SRC}
           alt=""
           aria-hidden="true"
           fetchPriority="high"
+          decoding="async"
+          // Intrinsic ratio so the stack has its height before the file
+          // arrives; without it the word and rail jumped down on load (CLS).
+          width={1400}
+          height={1027}
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           className="intro-word"
-          src="/brand/jeetlabs-word.svg"
+          src={INTRO_WORD_SRC}
           alt=""
           aria-hidden="true"
           fetchPriority="high"
+          decoding="async"
+          width={1275}
+          height={199}
         />
         {/* Indeterminate rail: page load has no meaningful progress number. */}
         <div className="intro-rail">

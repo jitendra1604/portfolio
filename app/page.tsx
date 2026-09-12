@@ -1,4 +1,5 @@
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
 import HeroSection from "./components/sections/HeroSection";
 import SectionSkeleton from "./components/SectionSkeleton";
 import LatestWritingSection from "./components/sections/LatestWritingSection";
@@ -50,7 +51,11 @@ export default function Home() {
       <ProjectsSection />
       <HowIBuildSection />
       <ExperienceSection />
-      <LatestWritingSection />
+      {/* Async (Notion). Its own boundary, so a slow fetch streams this one
+          section in instead of holding the whole page behind the loader. */}
+      <Suspense fallback={<SectionSkeleton titleWidth="w-64" />}>
+        <LatestWritingSection />
+      </Suspense>
       <ContactSection />
       <LiveSystemConsole />
     </>
