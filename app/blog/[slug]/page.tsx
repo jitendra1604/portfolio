@@ -411,34 +411,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </p>
           ) : null}
 
-          {/* The post used to just stop. Give a reader who got this far the
-              obvious next moves before the author card. */}
-          <aside className="mt-12 flex flex-col gap-4 rounded-xl border border-accent/30 bg-accent/[0.06] p-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-semibold text-ink">Found this useful?</p>
-              <p className="mt-1 text-sm text-body">New posts land every couple of weeks — no newsletter, just a feed.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <a href="/blog/rss.xml" className="btn btn-secondary !px-4 !py-2.5 text-[13px]">Subscribe via RSS</a>
-              <a href={siteIdentity.linkedin} target="_blank" rel="noopener noreferrer" className="btn btn-secondary !px-4 !py-2.5 text-[13px]">Follow on LinkedIn</a>
-            </div>
-          </aside>
-
-          {/* Author block — a named, credentialed author is what E-E-A-T asks
-              for, and it gives the post somewhere to send readers next. */}
-          <aside className="mt-12 rounded-xl border border-line bg-surface p-6">
-            <p className="text-xs uppercase tracking-[0.2em] text-caption">Written by</p>
-            <p className="mt-2 text-lg font-semibold text-ink">{siteIdentity.fullName}</p>
-            <p className="mt-2 text-sm text-body">
-              {siteIdentity.jobTitle} — React, Next.js, Node.js, AWS.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-4 text-sm">
-              <Link href="/#contact" className="text-accent hover:text-ink">Get in touch</Link>
-              <a href={siteIdentity.github} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-ink">GitHub</a>
-              <a href={siteIdentity.linkedin} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-ink">LinkedIn</a>
-            </div>
-          </aside>
-
           {related.length > 0 ? (
             <section className="mt-12">
               <h2 className="text-xs uppercase tracking-[0.2em] text-caption">Related reading</h2>
