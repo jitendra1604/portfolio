@@ -20,6 +20,16 @@ export type PortfolioProject = {
   stack: string[];
   highlights: string[];
   detail: ProjectDetail;
+  /** What you did on it — "Lead frontend", "Full stack". */
+  role?: string;
+  /** "2023" or "2022 – 2024". */
+  period?: string;
+  /** "Team of 4", "Solo". */
+  team?: string;
+  /** One headline result, ideally with a number: "100K+ monthly users". */
+  outcome?: string;
+  /** Public URL, when the product is live. */
+  url?: string;
 };
 
 export type HowIBuildPillar = {

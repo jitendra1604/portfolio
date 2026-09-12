@@ -1,17 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
+import Link from "next/link";
 import gsap from "gsap";
 import { useGsap } from "@/hooks/useGsap";
 import { portfolioData } from "@/lib/portfolio";
 import { flagshipProjectSlugs } from "@/lib/site";
 import { track } from "@vercel/analytics";
-import ArchitectureDiagram from "../ArchitectureDiagram";
+import FlowStrip from "../projects/FlowStrip";
+import type { PortfolioProject } from "@/types/portfolio";
 
+/**
+ * Seven projects used to be seven identical full-width cards, each hiding
+ * its case study behind an accordion. Now the three flagships get a feature
+ * card with the system flow drawn on it, the rest sit in a compact grid, and
+ * every card is a link to a real /projects/[slug] page.
+ */
 export default function ProjectsSection() {
   const projects = useMemo(() => portfolioData.projects ?? [], []);
-  const [openProject, setOpenProject] = useState<string | null>(null);
-  const detailRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const featured = useMemo(
+    () => flagshipProjectSlugs.map((slug) => projects.find((p) => p.slug === slug)).filter((p): p is PortfolioProject => Boolean(p)),
+    [projects]
+  );
+  const rest = useMemo(() => projects.filter((p) => !flagshipProjectSlugs.includes(p.slug)), [projects]);
 
   const animateSection = useCallback((gsapInstance: typeof gsap, scopeEl: HTMLElement) => {
     const q = gsapInstance.utils.selector(scopeEl);
@@ -24,11 +35,7 @@ export default function ProjectsSection() {
         opacity: 1,
         duration: 0.6,
         ease: "power3.out",
-        scrollTrigger: {
-          trigger: q(".projects-title")[0],
-          start: "top 90%",
-          once: true,
-        },
+        scrollTrigger: { trigger: q(".projects-title")[0], start: "top 90%", once: true },
       }
     );
 
@@ -41,44 +48,13 @@ export default function ProjectsSection() {
           opacity: 1,
           duration: 0.6,
           ease: "power3.out",
-          scrollTrigger: {
-            trigger: card,
-            start: "top 85%",
-            once: true,
-          },
+          scrollTrigger: { trigger: card, start: "top 85%", once: true },
         }
       );
     });
   }, []);
 
   const { scope } = useGsap(animateSection);
-
-  useEffect(() => {
-    projects.forEach((project) => {
-      const element = detailRefs.current[project.slug];
-      if (!element) return;
-
-      if (project.slug === openProject) {
-        gsap.set(element, { display: "block" });
-        gsap.to(element, {
-          height: "auto",
-          opacity: 1,
-          duration: 0.35,
-          ease: "power2.out",
-        });
-      } else {
-        gsap.to(element, {
-          height: 0,
-          opacity: 0,
-          duration: 0.25,
-          ease: "power2.inOut",
-          onComplete: () => {
-            gsap.set(element, { display: "none" });
-          },
-        });
-      }
-    });
-  }, [openProject, projects]);
 
   if (!projects.length) {
     return (
@@ -95,7 +71,7 @@ export default function ProjectsSection() {
       className="bg-background px-6 py-20 text-ink md:py-28"
     >
       <div className="mx-auto max-w-[1200px]">
-        <div className="projects-title mb-16 max-w-3xl">
+        <div className="projects-title mb-14 max-w-3xl">
           <p className="text-xs uppercase tracking-[0.3em] text-caption">
             Selected Projects
           </p>
@@ -103,178 +79,117 @@ export default function ProjectsSection() {
             Product work with architecture depth, not just polished UI.
           </h2>
           <p className="mt-6 text-lg leading-relaxed text-body">
-            Each project includes the delivery context behind the interface:
+            Each case study covers the delivery context behind the interface:
             architecture decisions, system flow, tradeoffs, and the problems the
             implementation had to solve.
           </p>
         </div>
 
+        {/* Flagships */}
         <div className="grid gap-6">
-          {projects.map((project) => {
-            const isOpen = openProject === project.slug;
-            const isFlagship = flagshipProjectSlugs.includes(project.slug);
-
-            return (
-              <article key={project.slug} className="project-card card" onClick={() => track("project_card_clicked", { project: project.slug })}>
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="max-w-3xl">
-                    <div className="flex flex-wrap gap-3">
-                      {project.stack.map((tech) => (
-                        <span
-                          key={tech}
-                          className="chip"
-                        >
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-
-                    <h3 className="mt-5 text-3xl font-semibold tracking-tight">
-                      {project.name}
-                    </h3>
-                    <p className="mt-4 max-w-2xl text-base leading-7 text-body">
-                      {project.description}
-                    </p>
-
-                    {isFlagship && <ul className="mt-6 space-y-2 text-sm leading-6 text-body">
-                      {project.highlights.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>}
-                  </div>
-
-                  <div className="flex shrink-0 items-start">
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        const next = isOpen ? null : project.slug;
-                        setOpenProject(next);
-                        if (next) track("project_details_toggled", { project: project.slug });
-                      }}
-                      aria-expanded={isOpen}
-                      className="btn btn-secondary"
-                    >
-                      {isOpen ? "Hide Details" : "View Details"}
-                      <svg
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        aria-hidden="true"
-                        className={`h-3.5 w-3.5 transition-transform duration-300 ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
-                      >
-                        <path
-                          d="M4 6l4 4 4-4"
-                          stroke="currentColor"
-                          strokeWidth="1.75"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-
-                <div
-                  ref={(element) => {
-                    detailRefs.current[project.slug] = element;
-                  }}
-                  className="overflow-hidden"
-                  style={{
-                    height: isOpen ? "auto" : 0,
-                    opacity: isOpen ? 1 : 0,
-                    display: isOpen ? "block" : "none",
-                  }}
-                >
-                  {isFlagship ? <div className="mt-8 grid gap-6 border-t border-line pt-8 lg:grid-cols-[1.2fr_0.8fr]">
-                    <div className="space-y-6">
-                      <div>
-                        <h4 className="text-xs uppercase tracking-[0.28em] text-caption">
-                          Architecture
-                        </h4>
-                        <p className="mt-3 text-sm leading-7 text-body">
-                          {project.detail.architecture}
-                        </p>
-                        <ArchitectureDiagram decisions={project.detail.decisions} />
-                      </div>
-
-                      <div className="grid gap-6 md:grid-cols-2">
-                        <div>
-                          <h4 className="text-xs uppercase tracking-[0.28em] text-caption">
-                            Technical Decisions
-                          </h4>
-                          <ul className="mt-3 space-y-3 text-sm leading-7 text-body">
-                            {project.detail.decisions.map((decision) => (
-                              <li key={decision}>{decision}</li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        <div>
-                          <h4 className="text-xs uppercase tracking-[0.28em] text-caption">
-                            Delivery Challenges
-                          </h4>
-                          <ul className="mt-3 space-y-3 text-sm leading-7 text-body">
-                            {project.detail.challenges.map((challenge) => (
-                              <li key={challenge}>{challenge}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-6">
-                      <div className="rounded-xl border border-line bg-black/30 p-5">
-                        <h4 className="text-xs uppercase tracking-[0.28em] text-caption">
-                          System Flow
-                        </h4>
-                        <ol className="mt-4 space-y-3 text-sm leading-7 text-body">
-                          {project.detail.flow.map((step, index) => (
-                            <li key={step}>
-                              <span className="mr-2 text-caption">
-                                {String(index + 1).padStart(2, "0")}
-                              </span>
-                              {step}
-                            </li>
-                          ))}
-                        </ol>
-                      </div>
-
-                      <div className="rounded-xl border border-line bg-black/30 p-5">
-                        <h4 className="text-xs uppercase tracking-[0.28em] text-caption">
-                          Outcomes
-                        </h4>
-                        <ul className="mt-4 space-y-3 text-sm leading-7 text-body">
-                          {project.detail.outcomes.map((outcome) => (
-                            <li key={outcome}>{outcome}</li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div className="rounded-xl border border-line bg-black/30 p-5">
-                        <h4 className="text-xs uppercase tracking-[0.28em] text-caption">
-                          Screens / Flows
-                        </h4>
-                        <div className="mt-4 flex flex-wrap gap-3">
-                          {project.detail.screens?.map((screen) => (
-                            <span
-                              key={screen}
-                              className="rounded-full border border-line bg-white/[0.06] px-3 py-2 text-xs text-caption"
-                            >
-                              {screen}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div> : <div className="mt-8 border-t border-line pt-7"><h4 className="text-xs uppercase tracking-[0.28em] text-caption">Project details</h4><ul className="mt-3 space-y-2 text-sm leading-6 text-body">{project.highlights.map((item) => <li key={item}>{item}</li>)}</ul></div>}
-                </div>
-              </article>
-            );
-          })}
+          {featured.map((project, index) => (
+            <FeatureCard key={project.slug} project={project} index={index} />
+          ))}
         </div>
+
+        {/* The rest */}
+        {rest.length > 0 ? (
+          <div className="mt-14">
+            <p className="text-xs uppercase tracking-[0.3em] text-caption">More work</p>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {rest.map((project) => (
+                <CompactCard key={project.slug} project={project} />
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
+  );
+}
+
+function Meta({ project }: { project: PortfolioProject }) {
+  const facts = [project.role, project.period, project.team].filter(Boolean);
+  if (facts.length === 0) return null;
+  return (
+    <p className="text-xs uppercase tracking-[0.18em] text-caption">
+      {facts.join(" · ")}
+    </p>
+  );
+}
+
+function FeatureCard({ project, index }: { project: PortfolioProject; index: number }) {
+  const href = `/projects/${project.slug}`;
+  return (
+    <article className="project-card card group relative">
+      <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-10">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="text-xs tabular-nums tracking-[0.2em] text-accent">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <Meta project={project} />
+          </div>
+
+          <h3 className="mt-3 text-3xl font-semibold tracking-tight">
+            <Link
+              href={href}
+              onClick={() => track("project_card_clicked", { project: project.slug })}
+              // Stretched link: the whole card is the target.
+              className="after:absolute after:inset-0 hover:text-accent"
+            >
+              {project.name}
+            </Link>
+          </h3>
+          <p className="mt-3 max-w-xl text-base leading-7 text-body">{project.description}</p>
+
+          {project.outcome ? (
+            <p className="mt-4 inline-flex items-center gap-2 text-sm text-ink">
+              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-accent" />
+              {project.outcome}
+            </p>
+          ) : null}
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            {project.stack.map((tech) => (
+              <span key={tech} className="chip">{tech}</span>
+            ))}
+          </div>
+
+          <span className="mt-6 inline-flex items-center gap-2 text-sm text-accent transition-transform group-hover:translate-x-0.5">
+            Read the case study <span aria-hidden="true">→</span>
+          </span>
+        </div>
+
+        <div className="min-w-0 self-center">
+          <p className="mb-3 text-[10px] uppercase tracking-[0.28em] text-caption">System flow</p>
+          <FlowStrip steps={project.detail.flow} compact />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function CompactCard({ project }: { project: PortfolioProject }) {
+  const href = `/projects/${project.slug}`;
+  return (
+    <article className="project-card card relative flex flex-col">
+      <Meta project={project} />
+      <h3 className="mt-2 text-lg font-semibold tracking-tight">
+        <Link
+          href={href}
+          onClick={() => track("project_card_clicked", { project: project.slug })}
+          className="after:absolute after:inset-0 hover:text-accent"
+        >
+          {project.name}
+        </Link>
+      </h3>
+      <p className="mt-2 line-clamp-3 text-sm leading-6 text-body">{project.description}</p>
+      <div className="mt-auto flex flex-wrap gap-1.5 pt-4">
+        {project.stack.slice(0, 3).map((tech) => (
+          <span key={tech} className="chip">{tech}</span>
+        ))}
+      </div>
+    </article>
   );
 }

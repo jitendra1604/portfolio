@@ -27,6 +27,9 @@ export default function Header() {
     );
     if (routeItem) {
       setActive(routeItem.href);
+    } else if (pathname.startsWith("/projects")) {
+      // Case-study pages belong to the Projects section of the home page.
+      setActive("/#projects");
     } else if (pathname === "/") {
       setActive("/#home");
     }

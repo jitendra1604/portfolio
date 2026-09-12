@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getAllPosts } from "@/lib/blog";
 import { siteUrl } from "@/lib/site";
+import { portfolioData } from "@/lib/portfolio";
 import { tagToSlug } from "./blog/tag/[tag]/page";
 
 function validDate(value: string): Date | undefined {
@@ -24,6 +25,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.8,
     },
+    ...portfolioData.projects.map((project) => ({
+      url: `${siteUrl}/projects/${project.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
     ...posts
       .filter((post) => post.source !== "external")
       .map((post) => {
